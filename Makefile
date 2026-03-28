@@ -11,12 +11,18 @@ OBIECTA = $(FONTES:.c=.o)
 
 BIBLIOTHECA = libcrispus.a
 
-omnia: $(BIBLIOTHECA)
+omnia: $(BIBLIOTHECA) cripe
 
 $(BIBLIOTHECA): $(OBIECTA)
 	$(AR) $(ARFLAGS) $@ $^
 
 %.o: %.c
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+cripe: $(BIBLIOTHECA) cripe.o
+	$(CC) $(CFLAGS) -o $@ cripe.o -L. -lcrispus
+
+cripe.o: cripe.c crispus.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 proba: $(BIBLIOTHECA) proba.o
@@ -26,6 +32,6 @@ proba.o: proba.c proba.h crispus.h internum.h arcana.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 purga:
-	rm -f $(OBIECTA) proba.o $(BIBLIOTHECA) proba
+	rm -f $(OBIECTA) proba.o cripe.o $(BIBLIOTHECA) proba cripe
 
-.PHONY: omnia purga proba
+.PHONY: omnia purga proba cripe

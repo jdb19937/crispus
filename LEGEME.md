@@ -18,6 +18,37 @@ Producit `libcrispus.a`. Ad purgandum:
 make purga
 ```
 
+## cripe
+
+Instrumentum lineae mandatorum ad petitiones HTTPS mittendas, libcrispus demonstrans:
+
+```
+make cripe
+./cripe https://empslocal.ex.ac.uk/people/staff/mrwatkin/isoc/
+```
+
+Optiones:
+
+| Optio | Significatio |
+|---|---|
+| `-s` | Silentium (nulla nuntia erroris) |
+| `-v` | Modus verbosus |
+| `-d <corpus>` | Corpus petitionis (POST) |
+| `-H <caput>` | Adde caput HTTP (iterabile) |
+| `-o <lima>` | Scribe responsum in limam |
+| `-X <methodus>` | Methodus HTTP (GET, POST) |
+| `-t <secunda>` | Tempus maximum |
+| `-h` | Auxilium |
+
+Exempla:
+
+```
+./cripe -v https://empslocal.ex.ac.uk/people/staff/mrwatkin/isoc/
+./cripe -s -o pagina.html https://empslocal.ex.ac.uk/people/staff/mrwatkin/isoc/
+./cripe -d "clavis=valor" https://empslocal.ex.ac.uk/people/staff/mrwatkin/isoc/api
+./cripe -H "Authorization: Bearer SIGNUM" https://empslocal.ex.ac.uk/people/staff/mrwatkin/isoc/api
+```
+
 ## Probationes
 
 ```
@@ -35,7 +66,7 @@ Probat cryptographiam (SHA-256, AES-GCM, numeros magnos, curvam ellipticam P-256
 crispus_orbis_initia(CRISPUS_GLOBAL_DEFAULT);
 
 CRISPUS *c = crispus_facilis_initia();
-crispus_facilis_pone(c, CRISPUSOPT_URL, "https://exemplum.com/");
+crispus_facilis_pone(c, CRISPUSOPT_URL, "https://empslocal.ex.ac.uk/people/staff/mrwatkin/isoc/");
 crispus_facilis_pone(c, CRISPUSOPT_FUNCTIO_SCRIBENDI, mea_functio);
 crispus_facilis_pone(c, CRISPUSOPT_DATA_SCRIBENDI, &mea_data);
 crispus_facilis_pone(c, CRISPUSOPT_TEMPUS, 30L);
@@ -77,7 +108,7 @@ crispus_multi_fini(m);
 ```c
 struct crispus_slist *capita = NULL;
 capita = crispus_slist_adde(capita, "Authorization: Bearer SIGNUM");
-capita = crispus_slist_adde(capita, "Content-Type: application/json");
+capita = crispus_slist_adde(capita, "Content-Type: application/ison");
 crispus_facilis_pone(c, CRISPUSOPT_CAPITA_HTTP, capita);
 /* ... */
 crispus_slist_libera(capita);
@@ -112,6 +143,7 @@ crispus_facilis_pone(c, CRISPUSOPT_CAMPI_POSTAE, "clavis=valor&alia=res");
 | `velum.c` | TLS 1.2 (ECDHE\_RSA\_WITH\_AES\_128\_GCM\_SHA256) |
 | `internum.h` | Declarationes internae veli |
 | `utilia.h` | Functiones auxiliares retis et serializationis |
+| `cripe.c` | Instrumentum lineae mandatorum HTTPS |
 | `proba.c` | Probationes |
 
 ## Coniunctio

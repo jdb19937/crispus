@@ -38,23 +38,53 @@ Building the library requires only a C compiler and make:
 make
 ```
 
-This produces `libcrispus.a`, a static archive you can link into your application. To clean build artifacts:
+This produces `libcrispus.a` and `cripe`, a curl-like command line tool that demonstrates the library. To clean build artifacts:
 
 ```
-make clean
+make purga
 ```
 
 A test suite is included and can be built and run with:
 
 ```
-make test
-./test
+make proba
+./proba
 ```
 
 Linking against crispus in your own project is straightforward:
 
 ```
 cc -o myapp myapp.c -L/path/to/crispus -lcrispus
+```
+
+## cripe
+
+cripe is a command line HTTP client built entirely on libcrispus. It exists for the same reason the library does: because sometimes you want to fetch a URL from a machine that has nothing on it but a C compiler, and you'd rather not install curl and its transitive dependency graph just to pull down a configuration file or poke an API endpoint.
+
+Every byte that leaves your machine when you run cripe was constructed by code you can read in this repository. The TLS handshake, the key exchange, the symmetric encryption, the HTTP framing — all of it flows through the same compact, auditable implementation that libcrispus provides. There is no shelling out to OpenSSL. There is no dynamically linked libcurl hiding behind a convenient interface. When cripe opens a socket and negotiates a TLS 1.2 session, it does so using the cryptographic primitives defined right here in the source tree: ECDHE over P-256 for key agreement, RSA for server authentication, AES-128-GCM for confidentiality and integrity, SHA-256 for hashing. If you want to know exactly what your tool is doing on the wire, you can read it in an afternoon.
+
+cripe is deliberately minimal. It does not attempt to replicate the full surface area of curl — that would defeat the purpose. Instead, it covers the operations that matter for the vast majority of scripting and automation tasks: fetching pages, posting data to APIs, setting custom headers, and saving responses to disk. If you need multipart form uploads, cookie jars, or HTTP/2 multiplexing, you need a bigger tool. If you need to hit an HTTPS endpoint and get the response, cripe does that with zero external dependencies and a binary small enough to embed in a firmware image.
+
+The verbose mode is particularly useful for debugging and education. It prints the outgoing request method, URL, headers, and POST body to stderr, followed by the response code and body size, giving you a clear picture of exactly what happened on the wire without needing to reach for a packet capture tool.
+
+```
+./cripe [options] <url>
+
+  -s            silent mode (suppress error messages)
+  -v            verbose mode (show request and response details)
+  -d <data>     request body (implies POST)
+  -H <header>   add HTTP header (repeatable)
+  -o <file>     write response to file
+  -X <method>   HTTP method (GET, POST)
+  -t <seconds>  timeout
+  -h            help
+```
+
+Examples:
+
+```
+./cripe https://www.fordcountychronicle.com/articles/featured/naked-gunman-70-still-not-located/
+./cripe -o page.html https://www.fordcountychronicle.com/articles/featured/naked-gunman-70-still-not-located/
 ```
 
 ## A note on scope
