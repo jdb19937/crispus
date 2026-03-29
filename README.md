@@ -10,7 +10,7 @@ crispus takes a fundamentally different approach. Every single byte of functiona
 
 This means your builds are fast, your binaries are small, your supply chain is auditable in an afternoon, and your deployment story is as simple as copying a single static archive.
 
-## What it does
+## What It Does
 
 crispus provides a straightforward interface for making HTTPS requests. You set a URL, optionally configure headers and POST data, and execute the request. You get back a response code and the body. It supports both a simple single-request interface for common use cases and a multiplexed interface that can execute many requests concurrently.
 
@@ -30,30 +30,30 @@ crispus is purpose-built for environments where minimizing external dependencies
 
 **Rapid prototyping and education.** If you're learning how HTTPS actually works — not at the API level, but at the level of TLS record framing, ECDHE key exchange, and AES-GCM authenticated encryption — crispus is one of the most approachable implementations in existence. Every function is named for what it does. The code reads top to bottom. There are no callbacks dispatching through five layers of indirection.
 
-## Getting started
+## Getting Started
 
 Building the library requires only a C compiler and make:
 
-```
+```bash
 make
 ```
 
 This produces `libcrispus.a` and `crispe`, a curl-like command line tool that demonstrates the library. To clean build artifacts:
 
-```
+```bash
 make purga
 ```
 
 A test suite is included and can be built and run with:
 
-```
+```bash
 make proba
 ./proba
 ```
 
 Linking against crispus in your own project is straightforward:
 
-```
+```bash
 cc -o myapp myapp.c -L/path/to/crispus -lcrispus
 ```
 
@@ -67,7 +67,7 @@ crispe is deliberately minimal. It does not attempt to replicate the full surfac
 
 The verbose mode is particularly useful for debugging and education. It prints the outgoing request method, URL, headers, and POST body to stderr, followed by the response code and body size, giving you a clear picture of exactly what happened on the wire without needing to reach for a packet capture tool.
 
-```
+```text
 ./crispe [options] <url>
 
   -s            silent mode (suppress error messages)
@@ -82,7 +82,7 @@ The verbose mode is particularly useful for debugging and education. It prints t
 
 Examples:
 
-```
+```bash
 ./crispe https://www.fordcountychronicle.com/articles/featured/naked-gunman-70-still-not-located/
 ./crispe -o page.html https://www.fordcountychronicle.com/articles/featured/naked-gunman-70-still-not-located/
 ```
@@ -97,7 +97,7 @@ Like its C counterpart, the Rust port has **zero external dependencies**. No ope
 
 The Rust port is actively maintained and is the recommended implementation for new projects. It benefits from Rust's memory safety guarantees, its expressive type system, and its tooling ecosystem — `cargo test` runs the full cryptographic and protocol test suite out of the box, with network-dependent HTTPS tests available via `cargo test -- --ignored`.
 
-```
+```bash
 cd cancer
 cargo build
 cargo test
@@ -105,7 +105,7 @@ cargo test -- --ignored   # HTTPS tests (requires network)
 cargo run --bin crispe -- https://example.com/
 ```
 
-## A note on scope
+## A Note on Scope
 
 crispus is not a replacement for every use of libcurl in every project. It implements the subset of HTTPS functionality that covers the overwhelming majority of real-world API client use cases: GET and POST over TLS 1.2 with modern cipher suites. If you need HTTP/2, SOCKS proxies, FTP, or client certificate authentication, you need a different tool.
 
