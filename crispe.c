@@ -1,11 +1,12 @@
 /*
- * cripe — instrumentum lineae mandatorum ad petitiones HTTPS
- *         mittendas, bibliothecam libcrispus demonstrans.
+ * crispe — instrumentum lineae mandatorum ad petitiones HTTPS
+ *          mittendas, bibliothecam libcrispus demonstrans.
  *
- * Usus: cripe [optiones] <url>
+ * Usus: crispe [optiones] <url>
  *
  *   -s            silentium (nulla nuntia erroris)
  *   -v            modus verbosus
+ *   -L            sequere redirectiones
  *   -d <data>     corpus petitionis (POST)
  *   -H <caput>    adde caput HTTP (iterabile)
  *   -o <lima>     scribe responsum in limam
@@ -58,6 +59,7 @@ scribe_auxilium(const char *nomen)
         "\n"
         "  -s            silentium (nulla nuntia erroris)\n"
         "  -v            modus verbosus\n"
+        "  -L            sequere redirectiones\n"
         "  -d <corpus>   corpus petitionis (methodus POST)\n"
         "  -H <caput>    adde caput HTTP (iterabile)\n"
         "  -o <lima>     scribe responsum in limam\n"
@@ -74,6 +76,7 @@ main(int numerus_arg, char *argumenta[])
 {
     int          silentium    = 0;
     int          verbosus     = 0;
+    int          sequere      = 0;
     const char  *corpus_postae = NULL;
     const char  *lima_exitus  = NULL;
     const char  *methodus     = NULL;
@@ -82,13 +85,16 @@ main(int numerus_arg, char *argumenta[])
     struct crispus_slist *capita = NULL;
 
     int opt;
-    while ((opt = getopt(numerus_arg, argumenta, "svd:H:o:X:t:h")) != -1) {
+    while ((opt = getopt(numerus_arg, argumenta, "svLd:H:o:X:t:h")) != -1) {
         switch (opt) {
         case 's':
             silentium = 1;
             break;
         case 'v':
             verbosus = 1;
+            break;
+        case 'L':
+            sequere = 1;
             break;
         case 'd':
             corpus_postae = optarg;
@@ -106,7 +112,7 @@ main(int numerus_arg, char *argumenta[])
             tempus_max = atol(optarg);
             if (tempus_max <= 0) {
                 if (!silentium)
-                    fprintf(stderr, "cripe: tempus invalidum: %s\n", optarg);
+                    fprintf(stderr, "crispe: tempus invalidum: %s\n", optarg);
                 return 1;
             }
             break;
@@ -121,7 +127,7 @@ main(int numerus_arg, char *argumenta[])
 
     if (optind >= numerus_arg) {
         if (!silentium)
-            fprintf(stderr, "cripe: URL deest\n");
+            fprintf(stderr, "crispe: URL deest\n");
         scribe_auxilium(argumenta[0]);
         return 1;
     }
@@ -142,7 +148,7 @@ main(int numerus_arg, char *argumenta[])
     CRISPUScode rc = crispus_orbis_initia(CRISPUS_GLOBAL_DEFAULT);
     if (rc != CRISPUSE_OK) {
         if (!silentium)
-            fprintf(stderr, "cripe: orbis initia defecit: %s\n",
+            fprintf(stderr, "crispe: orbis initia defecit: %s\n",
                     crispus_facilis_error(rc));
         return 1;
     }
@@ -152,13 +158,16 @@ main(int numerus_arg, char *argumenta[])
     CRISPUS *manubrium = crispus_facilis_initia();
     if (!manubrium) {
         if (!silentium)
-            fprintf(stderr, "cripe: manubrium creare non potuit\n");
+            fprintf(stderr, "crispe: manubrium creare non potuit\n");
         crispus_orbis_fini();
         return 1;
     }
 
     crispus_facilis_pone(manubrium, CRISPUSOPT_URL, url);
     crispus_facilis_pone(manubrium, CRISPUSOPT_TEMPUS, tempus_max);
+
+    if (sequere)
+        crispus_facilis_pone(manubrium, CRISPUSOPT_SEQUERE, 1);
 
     if (corpus_postae)
         crispus_facilis_pone(manubrium, CRISPUSOPT_CAMPI_POSTAE, corpus_postae);
@@ -191,7 +200,7 @@ main(int numerus_arg, char *argumenta[])
 
     if (rc != CRISPUSE_OK) {
         if (!silentium)
-            fprintf(stderr, "cripe: petitio defecit: %s\n",
+            fprintf(stderr, "crispe: petitio defecit: %s\n",
                     crispus_facilis_error(rc));
         free(resp.corpus);
         crispus_facilis_fini(manubrium);
@@ -217,7 +226,7 @@ main(int numerus_arg, char *argumenta[])
         FILE *lima = fopen(lima_exitus, "wb");
         if (!lima) {
             if (!silentium)
-                fprintf(stderr, "cripe: limam aperire non potuit: %s\n",
+                fprintf(stderr, "crispe: limam aperire non potuit: %s\n",
                         lima_exitus);
             status = 1;
         } else {

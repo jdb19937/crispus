@@ -128,199 +128,238 @@ fn resolve_url(url: &str) -> Option<UrlPartes> {
 //  Rogatum HTTP (age_rogatum)
 // ================================================================
 
+/// Numerus maximus redirectionum
+const MAXIMA_REDIRECTIONES: usize = 10;
+
+/// Quaere caput Location: in capitibus responsi
+fn quaere_locum(capita_bytes: &[u8]) -> Option<String> {
+    if let Ok(capita_str) = std::str::from_utf8(capita_bytes) {
+        for linea in capita_str.split("\r\n") {
+            let linea_min = linea.to_ascii_lowercase();
+            if linea_min.starts_with("location:") {
+                let val = linea[9..].trim();
+                return Some(val.to_string());
+            }
+        }
+    }
+    None
+}
+
 /// Age rogatum HTTP plenum. Reddit codicem crispus et ponit codex_responsi.
 fn age_rogatum(f: &mut CrispusFacilis) -> i32 {
-    let url_str = match &f.url {
+    let mut url_nunc = match &f.url {
         Some(u) => u.clone(),
         None => return CRISPUSE_ERRATUM,
     };
 
-    let url = match resolve_url(&url_str) {
-        Some(u) => u,
-        None => return CRISPUSE_ERRATUM,
-    };
-
-    // coniunge per TCP
-    let flumen = match TcpStream::connect(format!("{}:{}", url.hospes, url.portus)) {
-        Ok(f) => f,
-        Err(_) => return CRISPUSE_CONIUNCTIO,
-    };
-
-    // tempus maximum
-    if f.tempus_maximum > 0 {
-        let duratio = Duration::from_secs(f.tempus_maximum);
-        let _ = flumen.set_read_timeout(Some(duratio));
-        let _ = flumen.set_write_timeout(Some(duratio));
-    }
-
-    // TLS per Velum
-    let mut vel = Velum::crea(flumen, &url.hospes);
-
-    if vel.saluta() < 0 {
-        vel.claude();
-        return CRISPUSE_CONIUNCTIO;
-    }
-
-    // construi rogatum HTTP
-    let methodus = if f.campi_postae.is_some() {
-        "POST"
-    } else {
-        "GET"
-    };
-    let corpus_mag = f.campi_postae.as_ref().map(|c| c.len()).unwrap_or(0);
-
-    let mut caput = format!(
-        "{} {} HTTP/1.1\r\nHost: {}\r\nConnection: close\r\n",
-        methodus, url.via, url.hospes
-    );
-
-    // capita usoris
-    for c in &f.capita {
-        caput.push_str(c);
-        caput.push_str("\r\n");
-    }
-
-    if f.campi_postae.is_some() {
-        caput.push_str(&format!("Content-Length: {}\r\n", corpus_mag));
-    }
-
-    caput.push_str("\r\n");
-
-    // mitte caput
-    if vel.scribe(caput.as_bytes()) < 0 {
-        vel.claude();
-        return CRISPUSE_ERRATUM;
-    }
-
-    // mitte corpus
-    if let Some(ref corpus) = f.campi_postae {
-        if !corpus.is_empty() {
-            if vel.scribe(corpus.as_bytes()) < 0 {
-                vel.claude();
-                return CRISPUSE_ERRATUM;
-            }
-        }
-    }
-
-    // lege responsum HTTP — accumula totum
-    let mut resp: Vec<u8> = Vec::new();
-    let mut alveus = [0u8; 8192];
+    let mut redirectiones: usize = 0;
 
     loop {
-        let lectum = vel.lege(&mut alveus);
-        if lectum <= 0 {
-            break;
+        let url = match resolve_url(&url_nunc) {
+            Some(u) => u,
+            None => return CRISPUSE_ERRATUM,
+        };
+
+        // coniunge per TCP
+        let flumen = match TcpStream::connect(format!("{}:{}", url.hospes, url.portus)) {
+            Ok(f) => f,
+            Err(_) => return CRISPUSE_CONIUNCTIO,
+        };
+
+        // tempus maximum
+        if f.tempus_maximum > 0 {
+            let duratio = Duration::from_secs(f.tempus_maximum);
+            let _ = flumen.set_read_timeout(Some(duratio));
+            let _ = flumen.set_write_timeout(Some(duratio));
         }
-        resp.extend_from_slice(&alveus[..lectum as usize]);
-    }
 
-    vel.claude();
+        // TLS per Velum
+        let mut vel = Velum::crea(flumen, &url.hospes);
 
-    if resp.is_empty() {
-        return CRISPUSE_ERRATUM;
-    }
-
-    // quaere finem capitum (\r\n\r\n)
-    f.codex_responsi = 0;
-
-    let finis_capitum = resp.windows(4).position(|w| w == b"\r\n\r\n");
-
-    let finis_idx = match finis_capitum {
-        Some(i) => i + 4,
-        None => {
-            // nulla capita inventa — trade totum
-            if let Some(ref mut functio) = f.scribe_fn {
-                functio(&resp);
-            }
-            return CRISPUSE_OK;
+        if vel.saluta() < 0 {
+            vel.claude();
+            return CRISPUSE_CONIUNCTIO;
         }
-    };
 
-    // lege codicem status: "HTTP/1.1 200 OK\r\n"
-    let caput_bytes = &resp[..finis_idx];
-    if resp.len() >= 12 && caput_bytes.starts_with(b"HTTP/") {
-        if let Some(sp_pos) = caput_bytes.iter().position(|&b| b == b' ') {
-            let post_sp = &caput_bytes[sp_pos + 1..];
-            // lege numerum
-            let mut codex: i64 = 0;
-            for &b in post_sp {
-                if b >= b'0' && b <= b'9' {
-                    codex = codex * 10 + (b - b'0') as i64;
-                } else {
-                    break;
+        // construi rogatum HTTP
+        let methodus = if f.campi_postae.is_some() {
+            "POST"
+        } else {
+            "GET"
+        };
+        let corpus_mag = f.campi_postae.as_ref().map(|c| c.len()).unwrap_or(0);
+
+        let mut caput = format!(
+            "{} {} HTTP/1.1\r\nHost: {}\r\nConnection: close\r\n",
+            methodus, url.via, url.hospes
+        );
+
+        // capita usoris
+        for c in &f.capita {
+            caput.push_str(c);
+            caput.push_str("\r\n");
+        }
+
+        if f.campi_postae.is_some() {
+            caput.push_str(&format!("Content-Length: {}\r\n", corpus_mag));
+        }
+
+        caput.push_str("\r\n");
+
+        // mitte caput
+        if vel.scribe(caput.as_bytes()) < 0 {
+            vel.claude();
+            return CRISPUSE_ERRATUM;
+        }
+
+        // mitte corpus
+        if let Some(ref corpus) = f.campi_postae {
+            if !corpus.is_empty() {
+                if vel.scribe(corpus.as_bytes()) < 0 {
+                    vel.claude();
+                    return CRISPUSE_ERRATUM;
                 }
             }
-            f.codex_responsi = codex;
         }
-    }
 
-    let corpus = &resp[finis_idx..];
+        // lege responsum HTTP — accumula totum
+        let mut resp: Vec<u8> = Vec::new();
+        let mut alveus = [0u8; 8192];
 
-    // quaere Transfer-Encoding: chunked
-    let mut chunked = false;
-    {
-        // converte capita in chordam ad quaerendum
-        if let Ok(capita_str) = std::str::from_utf8(caput_bytes) {
-            for linea in capita_str.split("\r\n") {
-                let linea_min = linea.to_ascii_lowercase();
-                if linea_min.starts_with("transfer-encoding:") {
-                    if linea_min.contains("chunked") {
-                        chunked = true;
-                    }
-                    break;
-                }
-            }
-        }
-    }
-
-    if chunked {
-        // resolve chunked encoding
-        let src = corpus;
-        let src_mag = src.len();
-        let mut i: usize = 0;
-
-        while i < src_mag {
-            // lege magnitudinem chunk (hex)
-            let mut chunk_mag: usize = 0;
-            while i < src_mag && src[i] != b'\r' {
-                let c = src[i];
-                if c >= b'0' && c <= b'9' {
-                    chunk_mag = chunk_mag * 16 + (c - b'0') as usize;
-                } else if c >= b'a' && c <= b'f' {
-                    chunk_mag = chunk_mag * 16 + 10 + (c - b'a') as usize;
-                } else if c >= b'A' && c <= b'F' {
-                    chunk_mag = chunk_mag * 16 + 10 + (c - b'A') as usize;
-                }
-                i += 1;
-            }
-            // praetermitte \r\n
-            if i + 1 < src_mag {
-                i += 2;
-            }
-            if chunk_mag == 0 {
+        loop {
+            let lectum = vel.lege(&mut alveus);
+            if lectum <= 0 {
                 break;
             }
-            if i + chunk_mag > src_mag {
-                chunk_mag = src_mag - i;
-            }
-            if let Some(ref mut functio) = f.scribe_fn {
-                functio(&src[i..i + chunk_mag]);
-            }
-            i += chunk_mag;
-            if i + 1 < src_mag {
-                i += 2; // \r\n post chunk
-            }
+            resp.extend_from_slice(&alveus[..lectum as usize]);
         }
-    } else {
-        // corpus simplex
-        if let Some(ref mut functio) = f.scribe_fn {
-            if !corpus.is_empty() {
-                functio(corpus);
-            }
-        }
-    }
 
-    CRISPUSE_OK
+        vel.claude();
+
+        if resp.is_empty() {
+            return CRISPUSE_ERRATUM;
+        }
+
+        // quaere finem capitum (\r\n\r\n)
+        f.codex_responsi = 0;
+
+        let finis_capitum = resp.windows(4).position(|w| w == b"\r\n\r\n");
+
+        let finis_idx = match finis_capitum {
+            Some(i) => i + 4,
+            None => {
+                // nulla capita inventa — trade totum
+                if let Some(ref mut functio) = f.scribe_fn {
+                    functio(&resp);
+                }
+                return CRISPUSE_OK;
+            }
+        };
+
+        // lege codicem status: "HTTP/1.1 200 OK\r\n"
+        let caput_bytes = &resp[..finis_idx];
+        if resp.len() >= 12 && caput_bytes.starts_with(b"HTTP/") {
+            if let Some(sp_pos) = caput_bytes.iter().position(|&b| b == b' ') {
+                let post_sp = &caput_bytes[sp_pos + 1..];
+                let mut codex: i64 = 0;
+                for &b in post_sp {
+                    if b >= b'0' && b <= b'9' {
+                        codex = codex * 10 + (b - b'0') as i64;
+                    } else {
+                        break;
+                    }
+                }
+                f.codex_responsi = codex;
+            }
+        }
+
+        // sequere redirectionem si optio posita est
+        if f.sequere_redirectiones
+            && (f.codex_responsi == 301
+                || f.codex_responsi == 302
+                || f.codex_responsi == 303
+                || f.codex_responsi == 307
+                || f.codex_responsi == 308)
+            && redirectiones < MAXIMA_REDIRECTIONES
+        {
+            if let Some(locus) = quaere_locum(caput_bytes) {
+                redirectiones += 1;
+                if locus.starts_with('/') {
+                    url_nunc = format!("https://{}{}", url.hospes, locus);
+                } else {
+                    url_nunc = locus;
+                }
+                // 303: muta methodum ad GET
+                if f.codex_responsi == 303 {
+                    f.campi_postae = None;
+                }
+                continue;
+            }
+        }
+
+        let corpus = &resp[finis_idx..];
+
+        // quaere Transfer-Encoding: chunked
+        let mut chunked = false;
+        {
+            if let Ok(capita_str) = std::str::from_utf8(caput_bytes) {
+                for linea in capita_str.split("\r\n") {
+                    let linea_min = linea.to_ascii_lowercase();
+                    if linea_min.starts_with("transfer-encoding:") {
+                        if linea_min.contains("chunked") {
+                            chunked = true;
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
+        if chunked {
+            let src = corpus;
+            let src_mag = src.len();
+            let mut i: usize = 0;
+
+            while i < src_mag {
+                let mut chunk_mag: usize = 0;
+                while i < src_mag && src[i] != b'\r' {
+                    let c = src[i];
+                    if c >= b'0' && c <= b'9' {
+                        chunk_mag = chunk_mag * 16 + (c - b'0') as usize;
+                    } else if c >= b'a' && c <= b'f' {
+                        chunk_mag = chunk_mag * 16 + 10 + (c - b'a') as usize;
+                    } else if c >= b'A' && c <= b'F' {
+                        chunk_mag = chunk_mag * 16 + 10 + (c - b'A') as usize;
+                    }
+                    i += 1;
+                }
+                if i + 1 < src_mag {
+                    i += 2;
+                }
+                if chunk_mag == 0 {
+                    break;
+                }
+                if i + chunk_mag > src_mag {
+                    chunk_mag = src_mag - i;
+                }
+                if let Some(ref mut functio) = f.scribe_fn {
+                    functio(&src[i..i + chunk_mag]);
+                }
+                i += chunk_mag;
+                if i + 1 < src_mag {
+                    i += 2;
+                }
+            }
+        } else {
+            if let Some(ref mut functio) = f.scribe_fn {
+                if !corpus.is_empty() {
+                    functio(corpus);
+                }
+            }
+        }
+
+        return CRISPUSE_OK;
+    }
 }
 
 // ================================================================
@@ -334,6 +373,7 @@ pub struct CrispusFacilis {
     capita: Vec<String>,
     scribe_fn: Option<Box<dyn FnMut(&[u8]) -> usize>>,
     tempus_maximum: u64,
+    sequere_redirectiones: bool,
     codex_responsi: i64,
     exitus: i32,
 }
@@ -347,6 +387,7 @@ impl CrispusFacilis {
             capita: Vec::new(),
             scribe_fn: None,
             tempus_maximum: 60,
+            sequere_redirectiones: false,
             codex_responsi: 0,
             exitus: 0,
         }
@@ -375,6 +416,11 @@ impl CrispusFacilis {
     /// Pone tempus maximum (in secundis)
     pub fn pone_tempus(&mut self, secunda: u64) {
         self.tempus_maximum = secunda;
+    }
+
+    /// Pone sequere redirectiones (si verum, redirectiones 3xx sequuntur)
+    pub fn pone_sequere(&mut self, sequere: bool) {
+        self.sequere_redirectiones = sequere;
     }
 
     /// Age petitionem HTTP. Reddit codicem crispus.

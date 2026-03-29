@@ -38,6 +38,7 @@ typedef int CRISPUSMcode;
 #define CRISPUSOPT_FUNCTIO_SCRIBENDI    4
 #define CRISPUSOPT_DATA_SCRIBENDI       5
 #define CRISPUSOPT_TEMPUS               6
+#define CRISPUSOPT_SEQUERE              7
 
 /* --- informationes (ad crispus_facilis_info) --- */
 

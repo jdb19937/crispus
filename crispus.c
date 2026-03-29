@@ -35,6 +35,7 @@ struct crispus_facilis {
     size_t (*scribe_fn)(void *, size_t, size_t, void *);
     void *scribe_data;
     long tempus_maximum;
+    int sequere_redirectiones;
 
     /* responsum */
     long codex_responsi;
@@ -147,15 +148,51 @@ static int coniunge(const char *hospes, int portus)
 /* age rogatum HTTP plenum, reddit CRISPUScode.
  * vocat scribe_fn cum corpore responsi.
  * ponit codex_responsi. */
+/* numerus maximus redirectionum ne in circulum infinitum incidamus */
+#define MAXIMA_REDIRECTIONES 10
+
+/* quaere caput Location: in capitibus responsi */
+static int quaere_locum(const uint8_t *resp, const char *finis_capitum,
+                         char *locus, size_t locus_cap)
+{
+    const char *p = (const char *)resp;
+    while (p < finis_capitum) {
+        if (strncasecmp(p, "Location:", 9) == 0) {
+            const char *val = p + 9;
+            while (*val == ' ' || *val == '\t') val++;
+            size_t mag = 0;
+            while (val[mag] && val[mag] != '\r' && val[mag] != '\n')
+                mag++;
+            if (mag >= locus_cap) mag = locus_cap - 1;
+            memcpy(locus, val, mag);
+            locus[mag] = '\0';
+            return 0;
+        }
+        const char *nl = strstr(p, "\r\n");
+        if (!nl) break;
+        p = nl + 2;
+    }
+    return -1;
+}
+
 static CRISPUScode age_rogatum(struct crispus_facilis *f)
 {
+    char *url_nunc = strdup(f->url);
+    if (!url_nunc) return CRISPUSE_MEMORIA;
+
+    int redirectiones = 0;
+
+redirectio:;
+
     struct url_partes url;
-    if (resolve_url(f->url, &url) < 0)
+    if (resolve_url(url_nunc, &url) < 0) {
+        free(url_nunc);
         return CRISPUSE_ERRATUM;
+    }
 
     /* coniunge */
     int fd = coniunge(url.hospes, url.portus);
-    if (fd < 0) return CRISPUSE_CONIUNCTIO;
+    if (fd < 0) { free(url_nunc); return CRISPUSE_CONIUNCTIO; }
 
     /* tempus maximum per setsockopt */
     if (f->tempus_maximum > 0) {
@@ -168,11 +205,12 @@ static CRISPUScode age_rogatum(struct crispus_facilis *f)
 
     /* TLS */
     velum_t *vel = velum_crea(fd, url.hospes);
-    if (!vel) { close(fd); return CRISPUSE_MEMORIA; }
+    if (!vel) { close(fd); free(url_nunc); return CRISPUSE_MEMORIA; }
 
     if (velum_saluta(vel) < 0) {
         velum_claude(vel);
         close(fd);
+        free(url_nunc);
         return CRISPUSE_CONIUNCTIO;
     }
 
@@ -203,6 +241,7 @@ static CRISPUScode age_rogatum(struct crispus_facilis *f)
     if (velum_scribe(vel, caput, (size_t)n) < 0) {
         velum_claude(vel);
         close(fd);
+        free(url_nunc);
         return CRISPUSE_ERRATUM;
     }
 
@@ -211,6 +250,7 @@ static CRISPUScode age_rogatum(struct crispus_facilis *f)
         if (velum_scribe(vel, f->campi_postae, corpus_mag) < 0) {
             velum_claude(vel);
             close(fd);
+            free(url_nunc);
             return CRISPUSE_ERRATUM;
         }
     }
@@ -225,7 +265,7 @@ static CRISPUScode age_rogatum(struct crispus_facilis *f)
     /* accumula totum responsum */
     while ((lectum = velum_lege(vel, alveus, sizeof(alveus))) > 0) {
         uint8_t *novum = realloc(resp, resp_mag + (size_t)lectum);
-        if (!novum) { free(resp); velum_claude(vel); close(fd); return CRISPUSE_MEMORIA; }
+        if (!novum) { free(resp); velum_claude(vel); close(fd); free(url_nunc); return CRISPUSE_MEMORIA; }
         resp = novum;
         memcpy(resp + resp_mag, alveus, (size_t)lectum);
         resp_mag += (size_t)lectum;
@@ -237,6 +277,7 @@ static CRISPUScode age_rogatum(struct crispus_facilis *f)
 
     if (!resp || resp_mag == 0) {
         free(resp);
+        free(url_nunc);
         return CRISPUSE_ERRATUM;
     }
 
@@ -258,6 +299,7 @@ static CRISPUScode age_rogatum(struct crispus_facilis *f)
         if (f->scribe_fn)
             f->scribe_fn(resp, 1, resp_mag, f->scribe_data);
         free(resp);
+        free(url_nunc);
         return CRISPUSE_OK;
     }
 
@@ -265,6 +307,38 @@ static CRISPUScode age_rogatum(struct crispus_facilis *f)
     if (resp_mag >= 12 && memcmp(resp, "HTTP/", 5) == 0) {
         const char *sp = memchr(resp, ' ', (size_t)(finis_capitum - (char *)resp));
         if (sp) f->codex_responsi = strtol(sp + 1, NULL, 10);
+    }
+
+    /* sequere redirectionem si optio posita est */
+    if (f->sequere_redirectiones &&
+        (f->codex_responsi == 301 || f->codex_responsi == 302 ||
+         f->codex_responsi == 303 || f->codex_responsi == 307 ||
+         f->codex_responsi == 308)) {
+        if (redirectiones < MAXIMA_REDIRECTIONES) {
+            char locus[2048];
+            if (quaere_locum(resp, finis_capitum, locus, sizeof(locus)) == 0) {
+                free(resp);
+                redirectiones++;
+                /* si locus relativus est, construi URL absolutum */
+                if (locus[0] == '/') {
+                    char absolutum[2560];
+                    snprintf(absolutum, sizeof(absolutum),
+                             "https://%s%s", url.hospes, locus);
+                    free(url_nunc);
+                    url_nunc = strdup(absolutum);
+                } else {
+                    free(url_nunc);
+                    url_nunc = strdup(locus);
+                }
+                if (!url_nunc) return CRISPUSE_MEMORIA;
+                /* 303: muta methodum ad GET */
+                if (f->codex_responsi == 303) {
+                    free(f->campi_postae);
+                    f->campi_postae = NULL;
+                }
+                goto redirectio;
+            }
+        }
     }
 
     /* corpus est post capita */
@@ -318,6 +392,7 @@ static CRISPUScode age_rogatum(struct crispus_facilis *f)
     }
 
     free(resp);
+    free(url_nunc);
     return CRISPUSE_OK;
 }
 
@@ -413,6 +488,9 @@ CRISPUScode crispus_facilis_pone(CRISPUS *manubrium, int optio, ...)
         break;
     case CRISPUSOPT_TEMPUS:
         f->tempus_maximum = va_arg(ap, long);
+        break;
+    case CRISPUSOPT_SEQUERE:
+        f->sequere_redirectiones = va_arg(ap, int);
         break;
     default:
         va_end(ap);

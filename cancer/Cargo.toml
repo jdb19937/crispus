@@ -8,8 +8,8 @@ version = "0.1.0"
 edition = "2021"
 
 [[bin]]
-name = "cripe"
-path = "src/bin/cripe.rs"
+name = "crispe"
+path = "src/bin/crispe.rs"
 
 [[bin]]
 name = "proba"

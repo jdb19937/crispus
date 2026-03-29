@@ -1,6 +1,6 @@
-//! cripe — instrumentum lineae mandatorum ad petitiones HTTPS mittendas
+//! crispe — instrumentum lineae mandatorum ad petitiones HTTPS mittendas
 //!
-//! Usus: cripe [optiones] <url>
+//! Usus: crispe [optiones] <url>
 //!
 //!   -s            silentium (nulla nuntia erroris)
 //!   -v            modus verbosus
@@ -23,6 +23,7 @@ fn scribe_auxilium(nomen: &str) {
         "Usus: {} [optiones] <url>\n\n\
          \x20 -s            silentium (nulla nuntia erroris)\n\
          \x20 -v            modus verbosus\n\
+         \x20 -L            sequere redirectiones\n\
          \x20 -d <corpus>   corpus petitionis (methodus POST)\n\
          \x20 -H <caput>    adde caput HTTP (iterabile)\n\
          \x20 -o <lima>     scribe responsum in limam\n\
@@ -39,6 +40,7 @@ fn main() {
 
     let mut silentium = false;
     let mut verbosus = false;
+    let mut sequere = false;
     let mut corpus_postae: Option<String> = None;
     let mut lima_exitus: Option<String> = None;
     let mut methodus: Option<String> = None;
@@ -58,11 +60,13 @@ fn main() {
             silentium = true;
         } else if arg == "-v" {
             verbosus = true;
+        } else if arg == "-L" {
+            sequere = true;
         } else if arg == "-d" {
             i += 1;
             if i >= argumenta.len() {
                 if !silentium {
-                    eprintln!("cripe: -d requirit argumentum");
+                    eprintln!("crispe: -d requirit argumentum");
                 }
                 process::exit(1);
             }
@@ -71,7 +75,7 @@ fn main() {
             i += 1;
             if i >= argumenta.len() {
                 if !silentium {
-                    eprintln!("cripe: -H requirit argumentum");
+                    eprintln!("crispe: -H requirit argumentum");
                 }
                 process::exit(1);
             }
@@ -80,7 +84,7 @@ fn main() {
             i += 1;
             if i >= argumenta.len() {
                 if !silentium {
-                    eprintln!("cripe: -o requirit argumentum");
+                    eprintln!("crispe: -o requirit argumentum");
                 }
                 process::exit(1);
             }
@@ -89,7 +93,7 @@ fn main() {
             i += 1;
             if i >= argumenta.len() {
                 if !silentium {
-                    eprintln!("cripe: -X requirit argumentum");
+                    eprintln!("crispe: -X requirit argumentum");
                 }
                 process::exit(1);
             }
@@ -98,7 +102,7 @@ fn main() {
             i += 1;
             if i >= argumenta.len() {
                 if !silentium {
-                    eprintln!("cripe: -t requirit argumentum");
+                    eprintln!("crispe: -t requirit argumentum");
                 }
                 process::exit(1);
             }
@@ -106,14 +110,14 @@ fn main() {
                 Ok(t) if t > 0 => tempus_max = t,
                 _ => {
                     if !silentium {
-                        eprintln!("cripe: tempus invalidum: {}", argumenta[i]);
+                        eprintln!("crispe: tempus invalidum: {}", argumenta[i]);
                     }
                     process::exit(1);
                 }
             }
         } else if arg.starts_with('-') {
             if !silentium {
-                eprintln!("cripe: optio ignota: {}", arg);
+                eprintln!("crispe: optio ignota: {}", arg);
             }
             scribe_auxilium(nomen);
             process::exit(1);
@@ -130,7 +134,7 @@ fn main() {
         Some(u) => u,
         None => {
             if !silentium {
-                eprintln!("cripe: URL deest");
+                eprintln!("crispe: URL deest");
             }
             scribe_auxilium(nomen);
             process::exit(1);
@@ -151,6 +155,9 @@ fn main() {
     let mut manubrium = CrispusFacilis::initia();
     manubrium.pone_url(&url);
     manubrium.pone_tempus(tempus_max);
+    if sequere {
+        manubrium.pone_sequere(true);
+    }
 
     if let Some(ref corpus) = corpus_postae {
         manubrium.pone_campi_postae(corpus);
@@ -198,7 +205,7 @@ fn main() {
     if rc != CRISPUSE_OK {
         if !silentium {
             eprintln!(
-                "cripe: petitio defecit: {}",
+                "crispe: petitio defecit: {}",
                 CrispusFacilis::error_nuntius(rc)
             );
         }
@@ -227,7 +234,7 @@ fn main() {
                 if !resp_data.is_empty() {
                     if lima.write_all(&resp_data).is_err() {
                         if !silentium {
-                            eprintln!("cripe: in limam scribere non potuit: {}", lima_nomen);
+                            eprintln!("crispe: in limam scribere non potuit: {}", lima_nomen);
                         }
                         status = 1;
                     }
@@ -235,7 +242,7 @@ fn main() {
             }
             Err(_) => {
                 if !silentium {
-                    eprintln!("cripe: limam aperire non potuit: {}", lima_nomen);
+                    eprintln!("crispe: limam aperire non potuit: {}", lima_nomen);
                 }
                 status = 1;
             }
