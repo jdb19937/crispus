@@ -38,7 +38,7 @@ Building the library requires only a C compiler and make:
 make
 ```
 
-This produces `libcrispus.a` and `cripe`, a curl-like command line tool that demonstrates the library. To clean build artifacts:
+This produces `libcrispus.a` and `crispe`, a curl-like command line tool that demonstrates the library. To clean build artifacts:
 
 ```
 make purga
@@ -57,18 +57,18 @@ Linking against crispus in your own project is straightforward:
 cc -o myapp myapp.c -L/path/to/crispus -lcrispus
 ```
 
-## cripe
+## crispe
 
-cripe is a command line HTTP client built entirely on libcrispus. It exists for the same reason the library does: because sometimes you want to fetch a URL from a machine that has nothing on it but a C compiler, and you'd rather not install curl and its transitive dependency graph just to pull down a configuration file or poke an API endpoint.
+crispe is a command line HTTP client built entirely on libcrispus. It exists for the same reason the library does: because sometimes you want to fetch a URL from a machine that has nothing on it but a C compiler, and you'd rather not install curl and its transitive dependency graph just to pull down a configuration file or poke an API endpoint.
 
-Every byte that leaves your machine when you run cripe was constructed by code you can read in this repository. The TLS handshake, the key exchange, the symmetric encryption, the HTTP framing — all of it flows through the same compact, auditable implementation that libcrispus provides. There is no shelling out to OpenSSL. There is no dynamically linked libcurl hiding behind a convenient interface. When cripe opens a socket and negotiates a TLS 1.2 session, it does so using the cryptographic primitives defined right here in the source tree: ECDHE over P-256 for key agreement, RSA for server authentication, AES-128-GCM for confidentiality and integrity, SHA-256 for hashing. If you want to know exactly what your tool is doing on the wire, you can read it in an afternoon.
+Every byte that leaves your machine when you run crispe was constructed by code you can read in this repository. The TLS handshake, the key exchange, the symmetric encryption, the HTTP framing — all of it flows through the same compact, auditable implementation that libcrispus provides. There is no shelling out to OpenSSL. There is no dynamically linked libcurl hiding behind a convenient interface. When crispe opens a socket and negotiates a TLS 1.2 session, it does so using the cryptographic primitives defined right here in the source tree: ECDHE over P-256 for key agreement, RSA for server authentication, AES-128-GCM for confidentiality and integrity, SHA-256 for hashing. If you want to know exactly what your tool is doing on the wire, you can read it in an afternoon.
 
-cripe is deliberately minimal. It does not attempt to replicate the full surface area of curl — that would defeat the purpose. Instead, it covers the operations that matter for the vast majority of scripting and automation tasks: fetching pages, posting data to APIs, setting custom headers, and saving responses to disk. If you need multipart form uploads, cookie jars, or HTTP/2 multiplexing, you need a bigger tool. If you need to hit an HTTPS endpoint and get the response, cripe does that with zero external dependencies and a binary small enough to embed in a firmware image.
+crispe is deliberately minimal. It does not attempt to replicate the full surface area of curl — that would defeat the purpose. Instead, it covers the operations that matter for the vast majority of scripting and automation tasks: fetching pages, posting data to APIs, setting custom headers, and saving responses to disk. If you need multipart form uploads, cookie jars, or HTTP/2 multiplexing, you need a bigger tool. If you need to hit an HTTPS endpoint and get the response, crispe does that with zero external dependencies and a binary small enough to embed in a firmware image.
 
 The verbose mode is particularly useful for debugging and education. It prints the outgoing request method, URL, headers, and POST body to stderr, followed by the response code and body size, giving you a clear picture of exactly what happened on the wire without needing to reach for a packet capture tool.
 
 ```
-./cripe [options] <url>
+./crispe [options] <url>
 
   -s            silent mode (suppress error messages)
   -v            verbose mode (show request and response details)
@@ -83,8 +83,8 @@ The verbose mode is particularly useful for debugging and education. It prints t
 Examples:
 
 ```
-./cripe https://www.fordcountychronicle.com/articles/featured/naked-gunman-70-still-not-located/
-./cripe -o page.html https://www.fordcountychronicle.com/articles/featured/naked-gunman-70-still-not-located/
+./crispe https://www.fordcountychronicle.com/articles/featured/naked-gunman-70-still-not-located/
+./crispe -o page.html https://www.fordcountychronicle.com/articles/featured/naked-gunman-70-still-not-located/
 ```
 
 ## The Rust Port
@@ -93,7 +93,7 @@ crispus is also available as a complete, from-scratch Rust port, located in the 
 
 The Rust port achieves **complete feature parity** with the C implementation. The SHA-256 and HMAC-SHA-256 produce identical digests. The AES-128-GCM encryption and decryption pass the same NIST test vectors. The bignum arithmetic, the elliptic curve operations over P-256, the RSA signature verification, the ASN.1 certificate parsing, the TLS 1.2 handshake, the HTTP request framing, the chunked transfer-encoding decoder, the multi-request interface — all of it is there, all of it works, and all of it has been verified against the same test suite that validates the C library, including live HTTPS connections to real-world servers.
 
-Like its C counterpart, the Rust port has **zero external dependencies**. No openssl-sys, no rustls, no ring, no hyper, no tokio, no reqwest. The only thing it links against is the Rust standard library. `cargo build` produces a static library and two binaries — `cripe` (the command-line HTTPS client) and `proba` (the test suite) — with nothing else required. If you can run `rustc`, you can build it.
+Like its C counterpart, the Rust port has **zero external dependencies**. No openssl-sys, no rustls, no ring, no hyper, no tokio, no reqwest. The only thing it links against is the Rust standard library. `cargo build` produces a static library and two binaries — `crispe` (the command-line HTTPS client) and `proba` (the test suite) — with nothing else required. If you can run `rustc`, you can build it.
 
 The Rust port is actively maintained and is the recommended implementation for new projects. It benefits from Rust's memory safety guarantees, its expressive type system, and its tooling ecosystem — `cargo test` runs the full cryptographic and protocol test suite out of the box, with network-dependent HTTPS tests available via `cargo test -- --ignored`.
 
@@ -102,7 +102,7 @@ cd cancer
 cargo build
 cargo test
 cargo test -- --ignored   # HTTPS tests (requires network)
-cargo run --bin cripe -- https://example.com/
+cargo run --bin crispe -- https://example.com/
 ```
 
 ## A note on scope
