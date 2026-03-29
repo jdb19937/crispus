@@ -87,6 +87,26 @@ Examples:
 ./cripe -o page.html https://www.fordcountychronicle.com/articles/featured/naked-gunman-70-still-not-located/
 ```
 
+## The Rust Port
+
+crispus is also available as a complete, from-scratch Rust port, located in the `cancer/` directory. This is not a wrapper, not a binding, and not a partial sketch — it is a full, faithful, line-by-line translation of every module in the C library into idiomatic, safe Rust. Every cryptographic primitive, every protocol state machine, every byte of the TLS handshake has been carried over with the same care and attention to correctness that went into the original.
+
+The Rust port achieves **complete feature parity** with the C implementation. The SHA-256 and HMAC-SHA-256 produce identical digests. The AES-128-GCM encryption and decryption pass the same NIST test vectors. The bignum arithmetic, the elliptic curve operations over P-256, the RSA signature verification, the ASN.1 certificate parsing, the TLS 1.2 handshake, the HTTP request framing, the chunked transfer-encoding decoder, the multi-request interface — all of it is there, all of it works, and all of it has been verified against the same test suite that validates the C library, including live HTTPS connections to real-world servers.
+
+Like its C counterpart, the Rust port has **zero external dependencies**. No openssl-sys, no rustls, no ring, no hyper, no tokio, no reqwest. The only thing it links against is the Rust standard library. `cargo build` produces a static library and two binaries — `cripe` (the command-line HTTPS client) and `proba` (the test suite) — with nothing else required. If you can run `rustc`, you can build it.
+
+The Rust port is actively maintained and is the recommended implementation for new projects. It benefits from Rust's memory safety guarantees, its expressive type system, and its tooling ecosystem — `cargo test` runs the full cryptographic and protocol test suite out of the box, with network-dependent HTTPS tests available via `cargo test -- --ignored`.
+
+```
+cd cancer
+cargo build
+cargo test
+cargo test -- --ignored   # HTTPS tests (requires network)
+cargo run --bin cripe -- https://example.com/
+```
+
+The entire codebase — every function name, every variable, every comment — is written in classical Latin, consistent with the C original. This is not an affectation; it is a continuation of the same design philosophy that produced crispus in the first place.
+
 ## A note on scope
 
 crispus is not a replacement for every use of libcurl in every project. It implements the subset of HTTPS functionality that covers the overwhelming majority of real-world API client use cases: GET and POST over TLS 1.2 with modern cipher suites. If you need HTTP/2, SOCKS proxies, FTP, or client certificate authentication, you need a different tool.

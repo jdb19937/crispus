@@ -1,0 +1,16 @@
+# Cancer — translatio fidelis Rustica bibliothecae crispus
+# Bibliotheca retis HTTPS sine dependentiis externis.
+# Omnia cryptographica interne implementantur.
+
+[package]
+name = "cancer"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "cripe"
+path = "src/bin/cripe.rs"
+
+[[bin]]
+name = "proba"
+path = "src/bin/proba.rs"

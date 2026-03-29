@@ -152,6 +152,10 @@ crispus_facilis_pone(c, CRISPUSOPT_CAMPI_POSTAE, "clavis=valor&alia=res");
 cc -o meum_programma meum_programma.c -L. -lcrispus
 ```
 
+## Cancer
+
+In directorio `cancer/` translatio Rustica invenitur. Non sustinetur.
+
 ## Licentia
 
 Dominium publicum.
