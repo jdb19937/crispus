@@ -18,13 +18,13 @@ Producit `libcrispus.a`. Ad purgandum:
 make purga
 ```
 
-## cripe
+## crispe
 
 Instrumentum lineae mandatorum ad petitiones HTTPS mittendas, libcrispus demonstrans:
 
 ```
-make cripe
-./cripe https://empslocal.ex.ac.uk/people/staff/mrwatkin/isoc/
+make crispe
+./crispe https://empslocal.ex.ac.uk/people/staff/mrwatkin/isoc/
 ```
 
 Optiones:
@@ -43,10 +43,10 @@ Optiones:
 Exempla:
 
 ```
-./cripe -v https://empslocal.ex.ac.uk/people/staff/mrwatkin/isoc/
-./cripe -s -o pagina.html https://empslocal.ex.ac.uk/people/staff/mrwatkin/isoc/
-./cripe -d "clavis=valor" https://empslocal.ex.ac.uk/people/staff/mrwatkin/isoc/api
-./cripe -H "Authorization: Bearer SIGNUM" https://empslocal.ex.ac.uk/people/staff/mrwatkin/isoc/api
+./crispe -v https://empslocal.ex.ac.uk/people/staff/mrwatkin/isoc/
+./crispe -s -o pagina.html https://empslocal.ex.ac.uk/people/staff/mrwatkin/isoc/
+./crispe -d "clavis=valor" https://empslocal.ex.ac.uk/people/staff/mrwatkin/isoc/api
+./crispe -H "Authorization: Bearer SIGNUM" https://empslocal.ex.ac.uk/people/staff/mrwatkin/isoc/api
 ```
 
 ## Probationes
@@ -143,7 +143,7 @@ crispus_facilis_pone(c, CRISPUSOPT_CAMPI_POSTAE, "clavis=valor&alia=res");
 | `velum.c` | TLS 1.2 (ECDHE\_RSA\_WITH\_AES\_128\_GCM\_SHA256) |
 | `internum.h` | Declarationes internae veli |
 | `utilia.h` | Functiones auxiliares retis et serializationis |
-| `cripe.c` | Instrumentum lineae mandatorum HTTPS |
+| `crispe.c` | Instrumentum lineae mandatorum HTTPS |
 | `proba.c` | Probationes |
 
 ## Coniunctio
