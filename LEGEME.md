@@ -9,13 +9,13 @@ Omnia cryptographica — SHA-256, HMAC-SHA-256, AES-128-GCM, ECDHE (P-256), RSA,
 ## Aedificatio
 
 ```
-make omnia
+face omnia
 ```
 
 Producit `libcrispus.a`. Ad purgandum:
 
 ```
-make purga
+face purga
 ```
 
 ## Crispe
@@ -23,7 +23,7 @@ make purga
 Instrumentum lineae mandatorum ad petitiones HTTPS mittendas, libcrispus demonstrans:
 
 ```
-make crispe
+face crispe
 ./crispe https://empslocal.ex.ac.uk/people/staff/mrwatkin/isoc/
 ```
 
@@ -124,7 +124,7 @@ crispus_facilis_pone(c, CRISPUSOPT_CAMPI_POSTAE, "clavis=valor&alia=res");
 ## Probationes
 
 ```
-make proba
+face proba
 ./proba
 ```
 
