@@ -1,5 +1,5 @@
 /*
- * arca.c — AES-128 et modus GCM
+ * arcana.c — AES-128 et modus GCM
  *
  * Implementatio FIPS 197 (AES) et NIST SP 800-38D (GCM).
  * Sine dependentiis externis.
