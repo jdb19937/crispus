@@ -105,8 +105,6 @@ cargo test -- --ignored   # HTTPS tests (requires network)
 cargo run --bin cripe -- https://example.com/
 ```
 
-The entire codebase — every function name, every variable, every comment — is written in classical Latin, consistent with the C original. This is not an affectation; it is a continuation of the same design philosophy that produced crispus in the first place.
-
 ## A note on scope
 
 crispus is not a replacement for every use of libcurl in every project. It implements the subset of HTTPS functionality that covers the overwhelming majority of real-world API client use cases: GET and POST over TLS 1.2 with modern cipher suites. If you need HTTP/2, SOCKS proxies, FTP, or client certificate authentication, you need a different tool.
