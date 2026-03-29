@@ -6,7 +6,7 @@ CFLAGS  = -Wall -Wextra -pedantic -std=c11 -O2
 AR      = ar
 ARFLAGS = rcs
 
-FONTES  = crispus.c velum.c summa.c arca.c numerus.c
+FONTES  = crispus.c velum.c summa.c arcana.c numerus.c
 OBIECTA = $(FONTES:.c=.o)
 
 BIBLIOTHECA = libcrispus.a
