@@ -1,9 +1,9 @@
 # Faceplica — libcrispus.a
 # Bibliotheca retis HTTPS sine dependentiis externis.
 
-CC      = cc
-CFLAGS  = -Wall -Wextra -pedantic -std=c11 -O2
-AR      = ar
+CC      ?= cc
+CFLAGS  ?= -Wall -Wextra -pedantic -std=c99 -O2
+AR      ?= ar
 ARFLAGS = rcs
 
 FONTES  = crispus.c velum.c summa.c arcana.c numerus.c
