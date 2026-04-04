@@ -34,7 +34,7 @@ typedef struct {
 static size_t
 recipe_data(void *data, size_t magnitudo, size_t numerus, void *ctx)
 {
-    size_t longitudo = magnitudo * numerus;
+    size_t longitudo  = magnitudo * numerus;
     responsum_t *resp = (responsum_t *)ctx;
 
     char *novum = realloc(resp->corpus, resp->magnitudo + longitudo + 1);
@@ -54,7 +54,8 @@ recipe_data(void *data, size_t magnitudo, size_t numerus, void *ctx)
 static void
 scribe_auxilium(const char *nomen)
 {
-    fprintf(stderr,
+    fprintf(
+        stderr,
         "Usus: %s [optiones] <url>\n"
         "\n"
         "  -s            silentium (nulla nuntia erroris)\n"
@@ -66,7 +67,8 @@ scribe_auxilium(const char *nomen)
         "  -X <methodus> methodus HTTP (GET, POST)\n"
         "  -t <secunda>  tempus maximum (secunda)\n"
         "  -h            hoc auxilium\n",
-        nomen);
+        nomen
+    );
 }
 
 /* --- functio principalis --- */
@@ -74,13 +76,13 @@ scribe_auxilium(const char *nomen)
 int
 main(int numerus_arg, char *argumenta[])
 {
-    int          silentium    = 0;
-    int          verbosus     = 0;
-    int          sequere      = 0;
+    int          silentium     = 0;
+    int          verbosus      = 0;
+    int          sequere       = 0;
     const char  *corpus_postae = NULL;
-    const char  *lima_exitus  = NULL;
-    const char  *methodus     = NULL;
-    long         tempus_max   = 60;
+    const char  *lima_exitus   = NULL;
+    const char  *methodus      = NULL;
+    long         tempus_max    = 60;
 
     struct crispus_slist *capita = NULL;
 
@@ -148,8 +150,10 @@ main(int numerus_arg, char *argumenta[])
     CRISPUScode rc = crispus_orbis_initia(CRISPUS_GLOBAL_DEFAULT);
     if (rc != CRISPUSE_OK) {
         if (!silentium)
-            fprintf(stderr, "crispe: orbis initia defecit: %s\n",
-                    crispus_facilis_error(rc));
+            fprintf(
+                stderr, "crispe: orbis initia defecit: %s\n",
+                crispus_facilis_error(rc)
+            );
         return 1;
     }
 
@@ -200,8 +204,10 @@ main(int numerus_arg, char *argumenta[])
 
     if (rc != CRISPUSE_OK) {
         if (!silentium)
-            fprintf(stderr, "crispe: petitio defecit: %s\n",
-                    crispus_facilis_error(rc));
+            fprintf(
+                stderr, "crispe: petitio defecit: %s\n",
+                crispus_facilis_error(rc)
+            );
         free(resp.corpus);
         crispus_facilis_fini(manubrium);
         crispus_slist_libera(capita);
@@ -215,8 +221,10 @@ main(int numerus_arg, char *argumenta[])
     crispus_facilis_info(manubrium, CRISPUSINFO_CODEX_RESPONSI, &codex_responsi);
 
     if (verbosus)
-        fprintf(stderr, "< HTTP codex: %ld\n< Magnitudo: %zu octeti\n",
-                codex_responsi, resp.magnitudo);
+        fprintf(
+            stderr, "< HTTP codex: %ld\n< Magnitudo: %zu octeti\n",
+            codex_responsi, resp.magnitudo
+        );
 
     /* --- scribe responsum --- */
 
@@ -226,8 +234,10 @@ main(int numerus_arg, char *argumenta[])
         FILE *lima = fopen(lima_exitus, "wb");
         if (!lima) {
             if (!silentium)
-                fprintf(stderr, "crispe: limam aperire non potuit: %s\n",
-                        lima_exitus);
+                fprintf(
+                    stderr, "crispe: limam aperire non potuit: %s\n",
+                    lima_exitus
+                );
             status = 1;
         } else {
             if (resp.corpus && resp.magnitudo > 0)

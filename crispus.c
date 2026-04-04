@@ -80,24 +80,29 @@ static int resolve_url(const char *url, struct url_partes *p)
 
     /* praetermitte schema */
     const char *s = url;
-    if (strncmp(s, "https://", 8) == 0) s += 8;
-    else if (strncmp(s, "http://", 7) == 0) { s += 7; p->portus = 80; }
+    if (strncmp(s, "https://", 8) == 0)
+        s += 8;
+    else if (strncmp(s, "http://", 7) == 0) {
+        s += 7;
+        p->portus = 80;
+    }
 
     /* hospes */
     const char *obliquus = strchr(s, '/');
-    const char *duobus = strchr(s, ':');
+    const char *duobus   = strchr(s, ':');
     size_t hospes_mag;
 
     if (duobus && (!obliquus || duobus < obliquus)) {
         hospes_mag = (size_t)(duobus - s);
-        p->portus = atoi(duobus + 1);
+        p->portus  = atoi(duobus + 1);
     } else if (obliquus) {
         hospes_mag = (size_t)(obliquus - s);
     } else {
         hospes_mag = strlen(s);
     }
 
-    if (hospes_mag >= sizeof(p->hospes)) hospes_mag = sizeof(p->hospes) - 1;
+    if (hospes_mag >= sizeof(p->hospes))
+        hospes_mag = sizeof(p->hospes) - 1;
     memcpy(p->hospes, s, hospes_mag);
     p->hospes[hospes_mag] = '\0';
 
@@ -106,7 +111,8 @@ static int resolve_url(const char *url, struct url_partes *p)
 
     /* remove fragmentum (#...) — non mittitur ad servitorem */
     char *fragmentum = strchr(p->via, '#');
-    if (fragmentum) *fragmentum = '\0';
+    if (fragmentum)
+        *fragmentum = '\0';
 
     return 0;
 }
@@ -119,7 +125,7 @@ static int coniunge(const char *hospes, int portus)
 {
     struct addrinfo indicium, *effectus, *p;
     memset(&indicium, 0, sizeof(indicium));
-    indicium.ai_family = AF_UNSPEC;
+    indicium.ai_family   = AF_UNSPEC;
     indicium.ai_socktype = SOCK_STREAM;
 
     char portus_str[8];
@@ -131,7 +137,8 @@ static int coniunge(const char *hospes, int portus)
     int fd = -1;
     for (p = effectus; p; p = p->ai_next) {
         fd = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
-        if (fd < 0) continue;
+        if (fd < 0)
+            continue;
         if (connect(fd, p->ai_addr, p->ai_addrlen) == 0)
             break;
         close(fd);
@@ -152,24 +159,28 @@ static int coniunge(const char *hospes, int portus)
 #define MAXIMA_REDIRECTIONES 10
 
 /* quaere caput Location: in capitibus responsi */
-static int quaere_locum(const uint8_t *resp, const char *finis_capitum,
-                         char *locus, size_t locus_cap)
-{
+static int quaere_locum(
+    const uint8_t *resp, const char *finis_capitum,
+    char *locus, size_t locus_cap
+) {
     const char *p = (const char *)resp;
     while (p < finis_capitum) {
         if (strncasecmp(p, "Location:", 9) == 0) {
             const char *val = p + 9;
-            while (*val == ' ' || *val == '\t') val++;
+            while (*val == ' ' || *val == '\t')
+                val++;
             size_t mag = 0;
             while (val[mag] && val[mag] != '\r' && val[mag] != '\n')
                 mag++;
-            if (mag >= locus_cap) mag = locus_cap - 1;
+            if (mag >= locus_cap)
+                mag = locus_cap - 1;
             memcpy(locus, val, mag);
             locus[mag] = '\0';
             return 0;
         }
         const char *nl = strstr(p, "\r\n");
-        if (!nl) break;
+        if (!nl)
+            break;
         p = nl + 2;
     }
     return -1;
@@ -178,7 +189,8 @@ static int quaere_locum(const uint8_t *resp, const char *finis_capitum,
 static CRISPUScode age_rogatum(struct crispus_facilis *f)
 {
     char *url_nunc = strdup(f->url);
-    if (!url_nunc) return CRISPUSE_MEMORIA;
+    if (!url_nunc)
+        return CRISPUSE_MEMORIA;
 
     int redirectiones = 0;
 
@@ -192,12 +204,15 @@ redirectio:;
 
     /* coniunge */
     int fd = coniunge(url.hospes, url.portus);
-    if (fd < 0) { free(url_nunc); return CRISPUSE_CONIUNCTIO; }
+    if (fd < 0) {
+        free(url_nunc);
+        return CRISPUSE_CONIUNCTIO;
+    }
 
     /* tempus maximum per setsockopt */
     if (f->tempus_maximum > 0) {
         struct timeval tv;
-        tv.tv_sec = f->tempus_maximum;
+        tv.tv_sec  = f->tempus_maximum;
         tv.tv_usec = 0;
         setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
         setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
@@ -205,7 +220,11 @@ redirectio:;
 
     /* TLS */
     velum_t *vel = velum_crea(fd, url.hospes);
-    if (!vel) { close(fd); free(url_nunc); return CRISPUSE_MEMORIA; }
+    if (!vel) {
+        close(fd);
+        free(url_nunc);
+        return CRISPUSE_MEMORIA;
+    }
 
     if (velum_saluta(vel) < 0) {
         velum_claude(vel);
@@ -216,24 +235,30 @@ redirectio:;
 
     /* construi rogatum HTTP */
     const char *methodus = f->campi_postae ? "POST" : "GET";
-    size_t corpus_mag = f->campi_postae ? strlen(f->campi_postae) : 0;
+    size_t corpus_mag    = f->campi_postae ? strlen(f->campi_postae) : 0;
 
     /* caput rogati */
     char caput[4096];
-    int n = snprintf(caput, sizeof(caput),
-                     "%s %s HTTP/1.1\r\n"
-                     "Host: %s\r\n"
-                     "Connection: close\r\n",
-                     methodus, url.via, url.hospes);
+    int n = snprintf(
+        caput, sizeof(caput),
+        "%s %s HTTP/1.1\r\n"
+        "Host: %s\r\n"
+        "Connection: close\r\n",
+        methodus, url.via, url.hospes
+    );
 
     /* capita usoris */
     for (struct crispus_slist *c = f->capita; c; c = c->proximus)
-        n += snprintf(caput + n, sizeof(caput) - (size_t)n,
-                      "%s\r\n", c->data);
+        n += snprintf(
+            caput + n, sizeof(caput) - (size_t)n,
+            "%s\r\n", c->data
+        );
 
     if (f->campi_postae)
-        n += snprintf(caput + n, sizeof(caput) - (size_t)n,
-                      "Content-Length: %zu\r\n", corpus_mag);
+        n += snprintf(
+            caput + n, sizeof(caput) - (size_t)n,
+            "Content-Length: %zu\r\n", corpus_mag
+        );
 
     n += snprintf(caput + n, sizeof(caput) - (size_t)n, "\r\n");
 
@@ -259,13 +284,19 @@ redirectio:;
     uint8_t alveus[8192];
     int lectum;
     (void)0;
-    uint8_t *resp = NULL;
+    uint8_t *resp   = NULL;
     size_t resp_mag = 0;
 
     /* accumula totum responsum */
     while ((lectum = velum_lege(vel, alveus, sizeof(alveus))) > 0) {
         uint8_t *novum = realloc(resp, resp_mag + (size_t)lectum);
-        if (!novum) { free(resp); velum_claude(vel); close(fd); free(url_nunc); return CRISPUSE_MEMORIA; }
+        if (!novum) {
+            free(resp);
+            velum_claude(vel);
+            close(fd);
+            free(url_nunc);
+            return CRISPUSE_MEMORIA;
+        }
         resp = novum;
         memcpy(resp + resp_mag, alveus, (size_t)lectum);
         resp_mag += (size_t)lectum;
@@ -287,8 +318,10 @@ redirectio:;
     /* quaere finem capitum (\r\n\r\n) */
     char *finis_capitum = NULL;
     for (size_t i = 0; i + 3 < resp_mag; i++) {
-        if (resp[i] == '\r' && resp[i+1] == '\n' &&
-            resp[i+2] == '\r' && resp[i+3] == '\n') {
+        if (
+            resp[i] == '\r' && resp[i+1] == '\n' &&
+            resp[i+2] == '\r' && resp[i+3] == '\n'
+        ) {
             finis_capitum = (char *)resp + i + 4;
             break;
         }
@@ -306,14 +339,19 @@ redirectio:;
     /* lege codicem status: "HTTP/1.1 200 OK\r\n" */
     if (resp_mag >= 12 && memcmp(resp, "HTTP/", 5) == 0) {
         const char *sp = memchr(resp, ' ', (size_t)(finis_capitum - (char *)resp));
-        if (sp) f->codex_responsi = strtol(sp + 1, NULL, 10);
+        if (sp)
+            f->codex_responsi = strtol(sp + 1, NULL, 10);
     }
 
     /* sequere redirectionem si optio posita est */
-    if (f->sequere_redirectiones &&
-        (f->codex_responsi == 301 || f->codex_responsi == 302 ||
-         f->codex_responsi == 303 || f->codex_responsi == 307 ||
-         f->codex_responsi == 308)) {
+    if (
+        f->sequere_redirectiones &&
+        (
+            f->codex_responsi == 301 || f->codex_responsi == 302 ||
+            f->codex_responsi == 303 || f->codex_responsi == 307 ||
+            f->codex_responsi == 308
+        )
+    ) {
         if (redirectiones < MAXIMA_REDIRECTIONES) {
             char locus[2048];
             if (quaere_locum(resp, finis_capitum, locus, sizeof(locus)) == 0) {
@@ -322,15 +360,18 @@ redirectio:;
                 /* si locus relativus est, construi URL absolutum */
                 if (locus[0] == '/') {
                     char absolutum[2560];
-                    snprintf(absolutum, sizeof(absolutum),
-                             "https://%s%s", url.hospes, locus);
+                    snprintf(
+                        absolutum, sizeof(absolutum),
+                        "https://%s%s", url.hospes, locus
+                    );
                     free(url_nunc);
                     url_nunc = strdup(absolutum);
                 } else {
                     free(url_nunc);
                     url_nunc = strdup(locus);
                 }
-                if (!url_nunc) return CRISPUSE_MEMORIA;
+                if (!url_nunc)
+                    return CRISPUSE_MEMORIA;
                 /* 303: muta methodum ad GET */
                 if (f->codex_responsi == 303) {
                     free(f->campi_postae);
@@ -342,48 +383,57 @@ redirectio:;
     }
 
     /* corpus est post capita */
-    size_t corpus_off = (size_t)(finis_capitum - (char *)resp);
+    size_t corpus_off      = (size_t)(finis_capitum - (char *)resp);
     size_t corpus_resp_mag = resp_mag - corpus_off;
 
     /* quaere Transfer-Encoding: chunked */
     int chunked = 0;
     {
-        char *p = (char *)resp;
+        char *p   = (char *)resp;
         char *end = finis_capitum;
         while (p < end) {
             if (strncasecmp(p, "Transfer-Encoding:", 18) == 0) {
-                if (strstr(p, "chunked")) chunked = 1;
+                if (strstr(p, "chunked"))
+                    chunked = 1;
                 break;
             }
             char *nl = strstr(p, "\r\n");
-            if (!nl) break;
+            if (!nl)
+                break;
             p = nl + 2;
         }
     }
 
     if (chunked) {
         /* resolve chunked encoding */
-        uint8_t *src = (uint8_t *)finis_capitum;
+        uint8_t *src   = (uint8_t *)finis_capitum;
         size_t src_mag = corpus_resp_mag;
-        size_t i = 0;
+        size_t i       = 0;
         while (i < src_mag) {
             /* lege magnitudinem chunk (hex) */
             size_t chunk_mag = 0;
             while (i < src_mag && src[i] != '\r') {
                 uint8_t c = src[i];
-                if (c >= '0' && c <= '9') chunk_mag = chunk_mag * 16 + (c - '0');
-                else if (c >= 'a' && c <= 'f') chunk_mag = chunk_mag * 16 + 10 + (c - 'a');
-                else if (c >= 'A' && c <= 'F') chunk_mag = chunk_mag * 16 + 10 + (c - 'A');
+                if (c >= '0' && c <= '9')
+                    chunk_mag = chunk_mag * 16 + (c - '0');
+                else if (c >= 'a' && c <= 'f')
+                    chunk_mag = chunk_mag * 16 + 10 + (c - 'a');
+                else if (c >= 'A' && c <= 'F')
+                    chunk_mag = chunk_mag * 16 + 10 + (c - 'A');
                 i++;
             }
             /* praetermitte \r\n */
-            if (i + 1 < src_mag) i += 2;
-            if (chunk_mag == 0) break;
-            if (i + chunk_mag > src_mag) chunk_mag = src_mag - i;
+            if (i + 1 < src_mag)
+                i += 2;
+            if (chunk_mag == 0)
+                break;
+            if (i + chunk_mag > src_mag)
+                chunk_mag = src_mag - i;
             if (f->scribe_fn)
                 f->scribe_fn(src + i, 1, chunk_mag, f->scribe_data);
             i += chunk_mag;
-            if (i + 1 < src_mag) i += 2;  /* \r\n post chunk */
+            if (i + 1 < src_mag)
+                i += 2;  /* \r\n post chunk */
         }
     } else {
         /* corpus simplex */
@@ -400,18 +450,25 @@ redirectio:;
  *  crispus_slist
  * ================================================================ */
 
-struct crispus_slist *crispus_slist_adde(struct crispus_slist *index,
-                                          const char *chorda)
-{
+struct crispus_slist *crispus_slist_adde(
+    struct crispus_slist *index,
+    const char *chorda
+) {
     struct crispus_slist *novum = malloc(sizeof(*novum));
-    if (!novum) return index;
+    if (!novum)
+        return index;
     novum->data = strdup(chorda);
-    if (!novum->data) { free(novum); return index; }
+    if (!novum->data) {
+        free(novum);
+        return index;
+    }
     novum->proximus = NULL;
 
-    if (!index) return novum;
+    if (!index)
+        return novum;
     struct crispus_slist *p = index;
-    while (p->proximus) p = p->proximus;
+    while (p->proximus)
+        p = p->proximus;
     p->proximus = novum;
     return index;
 }
@@ -443,8 +500,9 @@ void crispus_orbis_fini(void)
 CRISPUS *crispus_facilis_initia(void)
 {
     struct crispus_facilis *f = calloc(1, sizeof(*f));
-    if (!f) return NULL;
-    f->tubus_fd = -1;
+    if (!f)
+        return NULL;
+    f->tubus_fd       = -1;
     f->tempus_maximum = 60;
     return f;
 }
@@ -452,18 +510,21 @@ CRISPUS *crispus_facilis_initia(void)
 void crispus_facilis_fini(CRISPUS *manubrium)
 {
     struct crispus_facilis *f = manubrium;
-    if (!f) return;
+    if (!f)
+        return;
     free(f->url);
     free(f->campi_postae);
     free(f->alveus_tubi);
-    if (f->tubus_fd >= 0) close(f->tubus_fd);
+    if (f->tubus_fd >= 0)
+        close(f->tubus_fd);
     free(f);
 }
 
 CRISPUScode crispus_facilis_pone(CRISPUS *manubrium, int optio, ...)
 {
     struct crispus_facilis *f = manubrium;
-    if (!f) return CRISPUSE_ERRATUM;
+    if (!f)
+        return CRISPUSE_ERRATUM;
 
     va_list ap;
     va_start(ap, optio);
@@ -504,7 +565,8 @@ CRISPUScode crispus_facilis_pone(CRISPUS *manubrium, int optio, ...)
 CRISPUScode crispus_facilis_age(CRISPUS *manubrium)
 {
     struct crispus_facilis *f = manubrium;
-    if (!f || !f->url) return CRISPUSE_ERRATUM;
+    if (!f || !f->url)
+        return CRISPUSE_ERRATUM;
     f->exitus = age_rogatum(f);
     return f->exitus;
 }
@@ -512,17 +574,18 @@ CRISPUScode crispus_facilis_age(CRISPUS *manubrium)
 CRISPUScode crispus_facilis_info(CRISPUS *manubrium, int info, ...)
 {
     struct crispus_facilis *f = manubrium;
-    if (!f) return CRISPUSE_ERRATUM;
+    if (!f)
+        return CRISPUSE_ERRATUM;
 
     va_list ap;
     va_start(ap, info);
 
     switch (info) {
     case CRISPUSINFO_CODEX_RESPONSI: {
-        long *p = va_arg(ap, long *);
-        *p = f->codex_responsi;
-        break;
-    }
+            long *p = va_arg(ap, long *);
+            *p      = f->codex_responsi;
+            break;
+        }
     default:
         va_end(ap);
         return CRISPUSE_ERRATUM;
@@ -564,7 +627,8 @@ CRISPUSM *crispus_multi_initia(void)
 void crispus_multi_fini(CRISPUSM *multi)
 {
     struct crispus_multi *m = multi;
-    if (!m) return;
+    if (!m)
+        return;
 
     for (int i = 0; i < m->numerus; i++) {
         struct crispus_facilis *f = m->manubria[i];
@@ -585,9 +649,13 @@ void crispus_multi_fini(CRISPUSM *multi)
 static size_t filius_scribe_fn(void *data, size_t mag, size_t nmemb, void *usor)
 {
     size_t realis = mag * nmemb;
-    struct { uint8_t *data; size_t mag; } *acc = usor;
+    struct {
+        uint8_t *data;
+        size_t mag;
+    }*acc = usor;
     uint8_t *novum = realloc(acc->data, acc->mag + realis);
-    if (!novum) return 0;
+    if (!novum)
+        return 0;
     acc->data = novum;
     memcpy(acc->data + acc->mag, data, realis);
     acc->mag += realis;
@@ -598,12 +666,15 @@ CRISPUSMcode crispus_multi_adde(CRISPUSM *multi, CRISPUS *facilis)
 {
     struct crispus_multi *m = multi;
     struct crispus_facilis *f = facilis;
-    if (!m || !f) return CRISPUSM_ERRATUM;
-    if (m->numerus >= MULTI_MAX) return CRISPUSM_ERRATUM;
+    if (!m || !f)
+        return CRISPUSM_ERRATUM;
+    if (m->numerus >= MULTI_MAX)
+        return CRISPUSM_ERRATUM;
 
     /* crea tubum */
     int tubi[2];
-    if (pipe(tubi) < 0) return CRISPUSM_ERRATUM;
+    if (pipe(tubi) < 0)
+        return CRISPUSM_ERRATUM;
 
     pid_t filius = fork();
     if (filius < 0) {
@@ -618,13 +689,19 @@ CRISPUSMcode crispus_multi_adde(CRISPUSM *multi, CRISPUS *facilis)
 
         /* claude omnes fd praeter tubum et std */
         for (int fd = 3; fd < 1024; fd++) {
-            if (fd != tubi[1]) close(fd);
+            if (fd != tubi[1])
+                close(fd);
         }
 
         /* accumulator corporis in filio */
-        struct { uint8_t *data; size_t mag; } acc = { NULL, 0 };
+        struct {
+            uint8_t *data;
+            size_t mag;
+        }acc = {
+            NULL, 0
+        };
 
-        f->scribe_fn = filius_scribe_fn;
+        f->scribe_fn   = filius_scribe_fn;
         f->scribe_data = &acc;
 
         CRISPUScode rc = age_rogatum(f);
@@ -645,12 +722,12 @@ CRISPUSMcode crispus_multi_adde(CRISPUSM *multi, CRISPUS *facilis)
 
     /* processus parentis */
     close(tubi[1]);
-    f->filius = filius;
-    f->tubus_fd = tubi[0];
-    f->perfectum = 0;
+    f->filius      = filius;
+    f->tubus_fd    = tubi[0];
+    f->perfectum   = 0;
     f->alveus_tubi = NULL;
-    f->alveus_mag = 0;
-    f->alveus_cap = 0;
+    f->alveus_mag  = 0;
+    f->alveus_cap  = 0;
 
     m->manubria[m->numerus++] = f;
     m->nuntii_num = 0;
@@ -662,7 +739,8 @@ CRISPUSMcode crispus_multi_remove(CRISPUSM *multi, CRISPUS *facilis)
 {
     struct crispus_multi *m = multi;
     struct crispus_facilis *f = facilis;
-    if (!m || !f) return CRISPUSM_ERRATUM;
+    if (!m || !f)
+        return CRISPUSM_ERRATUM;
 
     for (int i = 0; i < m->numerus; i++) {
         if (m->manubria[i] == f) {
@@ -685,7 +763,8 @@ CRISPUSMcode crispus_multi_remove(CRISPUSM *multi, CRISPUS *facilis)
 CRISPUSMcode crispus_multi_age(CRISPUSM *m_pub, int *currentes)
 {
     struct crispus_multi *m = (struct crispus_multi *)m_pub;
-    if (!m) return CRISPUSM_ERRATUM;
+    if (!m)
+        return CRISPUSM_ERRATUM;
 
     /* resice nuntios priores */
     m->nuntii_num = 0;
@@ -700,10 +779,12 @@ CRISPUSMcode crispus_multi_age(CRISPUSM *m_pub, int *currentes)
 
     for (int i = 0; i < m->numerus; i++) {
         struct crispus_facilis *f = m->manubria[i];
-        if (f->perfectum) continue;
-        if (f->tubus_fd < 0) continue;
-        indicium[npfd] = i;
-        pfds[npfd].fd = f->tubus_fd;
+        if (f->perfectum)
+            continue;
+        if (f->tubus_fd < 0)
+            continue;
+        indicium[npfd]    = i;
+        pfds[npfd].fd     = f->tubus_fd;
         pfds[npfd].events = POLLIN;
         npfd++;
         vivi++;
@@ -729,7 +810,7 @@ CRISPUSMcode crispus_multi_age(CRISPUSM *m_pub, int *currentes)
                     uint8_t *novum = realloc(f->alveus_tubi, nova_cap);
                     if (novum) {
                         f->alveus_tubi = novum;
-                        f->alveus_cap = nova_cap;
+                        f->alveus_cap  = nova_cap;
                     }
                 }
                 if (f->alveus_tubi) {
@@ -752,16 +833,18 @@ CRISPUSMcode crispus_multi_age(CRISPUSM *m_pub, int *currentes)
                     int32_t rc_val, codex_val;
                     memcpy(&rc_val, f->alveus_tubi, 4);
                     memcpy(&codex_val, f->alveus_tubi + 4, 4);
-                    f->exitus = rc_val;
+                    f->exitus         = rc_val;
                     f->codex_responsi = codex_val;
 
                     /* corpus responsi (post 8 octos) */
                     if (f->alveus_mag > 8 && f->scribe_fn) {
-                        f->scribe_fn(f->alveus_tubi + 8, 1,
-                                     f->alveus_mag - 8, f->scribe_data);
+                        f->scribe_fn(
+                            f->alveus_tubi + 8, 1,
+                            f->alveus_mag - 8, f->scribe_data
+                        );
                     }
                 } else {
-                    f->exitus = CRISPUSE_ERRATUM;
+                    f->exitus         = CRISPUSE_ERRATUM;
                     f->codex_responsi = 0;
                 }
 
@@ -770,8 +853,8 @@ CRISPUSMcode crispus_multi_age(CRISPUSM *m_pub, int *currentes)
 
                 /* adde nuntium */
                 if (m->nuntii_num < MULTI_MAX) {
-                    CRISPUSMsg *msg = &m->nuntii[m->nuntii_num++];
-                    msg->msg = CRISPUSMSG_PERFECTUM;
+                    CRISPUSMsg *msg  = &m->nuntii[m->nuntii_num++];
+                    msg->msg         = CRISPUSMSG_PERFECTUM;
                     msg->easy_handle = f;
                     msg->data.result = f->exitus;
                 }
@@ -779,20 +862,27 @@ CRISPUSMcode crispus_multi_age(CRISPUSM *m_pub, int *currentes)
         }
     }
 
-    if (currentes) *currentes = vivi;
+    if (currentes)
+        *currentes = vivi;
     return CRISPUSM_OK;
 }
 
 CRISPUSMsg *crispus_multi_lege(CRISPUSM *m_pub, int *residua)
 {
     struct crispus_multi *m = (struct crispus_multi *)m_pub;
-    if (!m) { if (residua) *residua = 0; return NULL; }
+    if (!m) {
+        if (residua)
+            *residua = 0;
+        return NULL;
+    }
 
     if (m->nuntii_idx < m->nuntii_num) {
         CRISPUSMsg *msg = &m->nuntii[m->nuntii_idx++];
-        if (residua) *residua = m->nuntii_num - m->nuntii_idx;
+        if (residua)
+            *residua = m->nuntii_num - m->nuntii_idx;
         return msg;
     }
-    if (residua) *residua = 0;
+    if (residua)
+        *residua = 0;
     return NULL;
 }

@@ -91,22 +91,26 @@ struct velum {
 
 /* --- TLS record mittere --- */
 
-static int mitte_tabellam(velum_t *v, uint8_t genus, const uint8_t *data,
-                           size_t mag)
-{
+static int mitte_tabellam(
+    velum_t *v, uint8_t genus, const uint8_t *data,
+    size_t mag
+) {
     uint8_t caput[5];
     caput[0] = genus;
     scr16(caput + 1, v->versio_tabellae);
     scr16(caput + 3, (uint16_t)mag);
-    if (mitte_plene(v->fd, caput, 5) < 0) return -1;
-    if (mag > 0 && mitte_plene(v->fd, data, mag) < 0) return -1;
+    if (mitte_plene(v->fd, caput, 5) < 0)
+        return -1;
+    if (mag > 0 && mitte_plene(v->fd, data, mag) < 0)
+        return -1;
     return 0;
 }
 
 /* mitte tabellam occultam (AES-128-GCM) */
-static int mitte_tabellam_occultam(velum_t *v, uint8_t genus,
-                                    const uint8_t *data, size_t mag)
-{
+static int mitte_tabellam_occultam(
+    velum_t *v, uint8_t genus,
+    const uint8_t *data, size_t mag
+) {
     /* nonce = iv_c (4) || explicit_nonce (8) */
     uint8_t nonce[12];
     memcpy(nonce, v->iv_c, 4);
@@ -123,14 +127,17 @@ static int mitte_tabellam_occultam(velum_t *v, uint8_t genus,
 
     /* occulta */
     uint8_t *occultus = malloc(8 + mag + 16);
-    if (!occultus) return -1;
+    if (!occultus)
+        return -1;
 
     /* explicit nonce (8 octorum) */
     memcpy(occultus, nonce + 4, 8);
 
-    arca128_gcm_occulta(v->clavis_scr_c, nonce,
-                         data, mag, aad, 13,
-                         occultus + 8, occultus + 8 + mag);
+    arca128_gcm_occulta(
+        v->clavis_scr_c, nonce,
+        data, mag, aad, 13,
+        occultus + 8, occultus + 8 + mag
+    );
 
     int rc = mitte_tabellam(v, genus, occultus, 8 + mag + 16);
     free(occultus);
@@ -140,25 +147,31 @@ static int mitte_tabellam_occultam(velum_t *v, uint8_t genus,
 
 /* --- TLS record legere --- */
 
-static int lege_tabellam(velum_t *v, uint8_t *genus, uint8_t *data,
-                          size_t *mag)
-{
+static int lege_tabellam(
+    velum_t *v, uint8_t *genus, uint8_t *data,
+    size_t *mag
+) {
     uint8_t caput[5];
-    if (lege_plene(v->fd, caput, 5) < 0) return -1;
+    if (lege_plene(v->fd, caput, 5) < 0)
+        return -1;
     *genus = caput[0];
-    *mag = leg16(caput + 3);
-    if (*mag > 16384 + 256) return -1;
-    if (lege_plene(v->fd, data, *mag) < 0) return -1;
+    *mag   = leg16(caput + 3);
+    if (*mag > 16384 + 256)
+        return -1;
+    if (lege_plene(v->fd, data, *mag) < 0)
+        return -1;
     return 0;
 }
 
 /* lege et revela tabellam */
-static int lege_tabellam_revelam(velum_t *v, uint8_t *genus,
-                                  uint8_t *data, size_t *mag)
-{
+static int lege_tabellam_revelam(
+    velum_t *v, uint8_t *genus,
+    uint8_t *data, size_t *mag
+) {
     uint8_t alveus[16384 + 256];
     size_t alveus_mag;
-    if (lege_tabellam(v, genus, alveus, &alveus_mag) < 0) return -1;
+    if (lege_tabellam(v, genus, alveus, &alveus_mag) < 0)
+        return -1;
 
     if (!v->revelans) {
         memcpy(data, alveus, alveus_mag);
@@ -167,7 +180,8 @@ static int lege_tabellam_revelam(velum_t *v, uint8_t *genus,
     }
 
     /* revelatio GCM: alveus = explicit_nonce(8) || ciphertext || tag(16) */
-    if (alveus_mag < 24) return -1;
+    if (alveus_mag < 24)
+        return -1;
 
     uint8_t nonce[12];
     memcpy(nonce, v->iv_s, 4);
@@ -183,10 +197,14 @@ static int lege_tabellam_revelam(velum_t *v, uint8_t *genus,
     scr16(aad + 9, VERSIO_TLS12);
     scr16(aad + 11, (uint16_t)tc_mag);
 
-    if (arca128_gcm_revela(v->clavis_scr_s, nonce,
-                            alveus + 8, tc_mag,
-                            aad, 13, data,
-                            alveus + 8 + tc_mag) < 0)
+    if (
+        arca128_gcm_revela(
+            v->clavis_scr_s, nonce,
+            alveus + 8, tc_mag,
+            aad, 13, data,
+            alveus + 8 + tc_mag
+        ) < 0
+    )
         return -1;
 
     *mag = tc_mag;
@@ -196,17 +214,19 @@ static int lege_tabellam_revelam(velum_t *v, uint8_t *genus,
 
 /* --- TLS PRF (SHA-256) --- */
 
-static void prf(const uint8_t *secretum, size_t sec_mag,
-                const char *titulus,
-                const uint8_t *semen, size_t sem_mag,
-                uint8_t *effectus, size_t eff_mag)
-{
+static void prf(
+    const uint8_t *secretum, size_t sec_mag,
+    const char *titulus,
+    const uint8_t *semen, size_t sem_mag,
+    uint8_t *effectus, size_t eff_mag
+) {
     size_t tit_mag = strlen(titulus);
 
     /* semen completum = titulus || semen */
     size_t sc_mag = tit_mag + sem_mag;
-    uint8_t *sc = malloc(sc_mag);
-    if (!sc) return;
+    uint8_t *sc   = malloc(sc_mag);
+    if (!sc)
+        return;
     memcpy(sc, titulus, tit_mag);
     memcpy(sc + tit_mag, semen, sem_mag);
 
@@ -218,7 +238,8 @@ static void prf(const uint8_t *secretum, size_t sec_mag,
     while (scriptum < eff_mag) {
         /* P(i) = HMAC(secretum, A(i) || sc) */
         uint8_t *concatenatio = malloc(32 + sc_mag);
-        if (!concatenatio) break;
+        if (!concatenatio)
+            break;
         memcpy(concatenatio, A, 32);
         memcpy(concatenatio + 32, sc, sc_mag);
 
@@ -227,7 +248,8 @@ static void prf(const uint8_t *secretum, size_t sec_mag,
         free(concatenatio);
 
         size_t n = eff_mag - scriptum;
-        if (n > 32) n = 32;
+        if (n > 32)
+            n = 32;
         memcpy(effectus + scriptum, P, n);
         scriptum += n;
 
@@ -304,7 +326,7 @@ static int mitte_salve_clientis(velum_t *v)
     };
 
     size_t ext_totalis = sni_mag + sizeof(ext_groups) + sizeof(ext_ecf) +
-                         sizeof(ext_sig) + sizeof(ext_reneg);
+    sizeof(ext_sig) + sizeof(ext_reneg);
 
     /* corpus ClientHello */
     /* 2(versio) + 32(alea) + 1(sid_mag) + 2(cs_mag) + 4(cs) +
@@ -313,39 +335,55 @@ static int mitte_salve_clientis(velum_t *v)
 
     /* nuntius salutationis = genus(1) + longitudo(3) + corpus */
     size_t nuntius_mag = 4 + corpus_mag;
-    uint8_t *nuntius = malloc(nuntius_mag);
-    if (!nuntius) return -1;
+    uint8_t *nuntius   = malloc(nuntius_mag);
+    if (!nuntius)
+        return -1;
 
     uint8_t *p = nuntius;
 
     /* caput salutationis */
     *p++ = SAL_SALVE_CLIENTIS;
-    scr24(p, (uint32_t)corpus_mag); p += 3;
+    scr24(p, (uint32_t)corpus_mag);
+    p += 3;
 
     /* versio clientis */
-    scr16(p, VERSIO_TLS12); p += 2;
+    scr16(p, VERSIO_TLS12);
+    p += 2;
 
     /* alea clientis */
-    memcpy(p, v->clientis_alea, 32); p += 32;
+    memcpy(p, v->clientis_alea, 32);
+    p += 32;
 
     /* sessio ID (vacua) */
     *p++ = 0;
 
     /* cipher suites */
-    scr16(p, 4); p += 2;          /* 2 cipher suites * 2 bytes */
-    scr16(p, CIPHER_ECDHE); p += 2;
-    scr16(p, 0x00ff); p += 2;      /* TLS_EMPTY_RENEGOTIATION_INFO_SCSV */
+    scr16(p, 4);
+    p += 2;
+    /* 2 cipher suites * 2 bytes */
+    scr16(p, CIPHER_ECDHE);
+    p += 2;
+    scr16(p, 0x00ff);
+    p += 2;
+    /* TLS_EMPTY_RENEGOTIATION_INFO_SCSV */
 
     /* compressio: nulla */
-    *p++ = 1; *p++ = 0;
+    *p++ = 1;
+    *p++ = 0;
 
     /* extensiones */
-    scr16(p, (uint16_t)ext_totalis); p += 2;
-    memcpy(p, ext_sni, sni_mag); p += sni_mag;
-    memcpy(p, ext_groups, sizeof(ext_groups)); p += sizeof(ext_groups);
-    memcpy(p, ext_ecf, sizeof(ext_ecf)); p += sizeof(ext_ecf);
-    memcpy(p, ext_sig, sizeof(ext_sig)); p += sizeof(ext_sig);
-    memcpy(p, ext_reneg, sizeof(ext_reneg)); p += sizeof(ext_reneg);
+    scr16(p, (uint16_t)ext_totalis);
+    p += 2;
+    memcpy(p, ext_sni, sni_mag);
+    p += sni_mag;
+    memcpy(p, ext_groups, sizeof(ext_groups));
+    p += sizeof(ext_groups);
+    memcpy(p, ext_ecf, sizeof(ext_ecf));
+    p += sizeof(ext_ecf);
+    memcpy(p, ext_sig, sizeof(ext_sig));
+    p += sizeof(ext_sig);
+    memcpy(p, ext_reneg, sizeof(ext_reneg));
+    p += sizeof(ext_reneg);
 
     (void)p;
 
@@ -373,30 +411,36 @@ static int sal_imple(velum_t *v, size_t opus)
             return -1;
         /* compacta si opus est */
         if (v->sal_pos > 0 && v->sal_mag + alveus_mag > sizeof(v->alveus_sal)) {
-            memmove(v->alveus_sal, v->alveus_sal + v->sal_pos,
-                    v->sal_mag - v->sal_pos);
+            memmove(
+                v->alveus_sal, v->alveus_sal + v->sal_pos,
+                v->sal_mag - v->sal_pos
+            );
             v->sal_mag -= v->sal_pos;
             v->sal_pos = 0;
         }
-        if (v->sal_mag + alveus_mag > sizeof(v->alveus_sal)) return -1;
+        if (v->sal_mag + alveus_mag > sizeof(v->alveus_sal))
+            return -1;
         memcpy(v->alveus_sal + v->sal_mag, alveus, alveus_mag);
         v->sal_mag += alveus_mag;
     }
     return 0;
 }
 
-static int lege_nuntium_sal(velum_t *v, uint8_t *genus, uint8_t *data,
-                             size_t *mag)
-{
+static int lege_nuntium_sal(
+    velum_t *v, uint8_t *genus, uint8_t *data,
+    size_t *mag
+) {
     /* assure caput salutationis (4 octorum) */
-    if (sal_imple(v, 4) < 0) return -1;
+    if (sal_imple(v, 4) < 0)
+        return -1;
 
     uint8_t *p = v->alveus_sal + v->sal_pos;
-    *genus = p[0];
+    *genus     = p[0];
     size_t lon = leg24(p + 1);
 
     /* assure corpus integrum */
-    if (sal_imple(v, 4 + lon) < 0) return -1;
+    if (sal_imple(v, 4 + lon) < 0)
+        return -1;
 
     p = v->alveus_sal + v->sal_pos;
     memcpy(data, p + 4, lon);
@@ -417,11 +461,13 @@ static int lege_nuntium_sal(velum_t *v, uint8_t *genus, uint8_t *data,
 velum_t *velum_crea(int fd, const char *hospes)
 {
     velum_t *v = calloc(1, sizeof(velum_t));
-    if (!v) return NULL;
+    if (!v)
+        return NULL;
     v->fd = fd;
     if (hospes) {
         size_t n = strlen(hospes);
-        if (n >= sizeof(v->hospes)) n = sizeof(v->hospes) - 1;
+        if (n >= sizeof(v->hospes))
+            n = sizeof(v->hospes) - 1;
         memcpy(v->hospes, hospes, n);
     }
     v->versio_tabellae = VERSIO_TLS10;
@@ -436,50 +482,69 @@ int velum_saluta(velum_t *v)
     uint8_t genus;
 
     /* 1. mitte ClientHello */
-    if (mitte_salve_clientis(v) < 0) return -1;
+    if (mitte_salve_clientis(v) < 0)
+        return -1;
 
     /* 2. accipe ServerHello */
-    if (lege_nuntium_sal(v, &genus, data, &mag) < 0 ||
-        genus != SAL_SALVE_SERVITORIS)
+    if (
+        lege_nuntium_sal(v, &genus, data, &mag) < 0 ||
+        genus != SAL_SALVE_SERVITORIS
+    )
         return -1;
-    if (mag < 38) return -1;
+    if (mag < 38)
+        return -1;
     /* versio (2) + alea (32) + sessio_id_mag (1) ... */
     memcpy(v->servitoris_alea, data + 2, 32);
     size_t sid_mag = data[34];
-    size_t pos = 35 + sid_mag;
-    if (pos + 3 > mag) return -1;
+    size_t pos     = 35 + sid_mag;
+    if (pos + 3 > mag)
+        return -1;
     uint16_t cipher = leg16(data + pos);
-    if (cipher != CIPHER_ECDHE) return -1;
+    if (cipher != CIPHER_ECDHE)
+        return -1;
     v->versio_tabellae = VERSIO_TLS12;
 
     /* 3. accipe Certificate */
-    if (lege_nuntium_sal(v, &genus, data, &mag) < 0 ||
-        genus != SAL_TESTIMONIUM)
+    if (
+        lege_nuntium_sal(v, &genus, data, &mag) < 0 ||
+        genus != SAL_TESTIMONIUM
+    )
         return -1;
     /* processus catena testimoniorum */
-    if (mag < 3) return -1;
+    if (mag < 3)
+        return -1;
     size_t catena_mag = leg24(data);
-    if (catena_mag + 3 > mag) return -1;
+    if (catena_mag + 3 > mag)
+        return -1;
     /* primum testimonium */
-    if (catena_mag < 3) return -1;
+    if (catena_mag < 3)
+        return -1;
     size_t test_mag = leg24(data + 3);
-    if (test_mag + 6 > mag) return -1;
+    if (test_mag + 6 > mag)
+        return -1;
     /* extrahe clavem RSA */
     if (asn1_extrahe_rsa(data + 6, test_mag, &v->clavis_rsa) < 0)
         return -1;
     v->habet_clavem = 1;
 
     /* 4. accipe ServerKeyExchange */
-    if (lege_nuntium_sal(v, &genus, data, &mag) < 0 ||
-        genus != SAL_CLAVIS_SERVITORIS)
+    if (
+        lege_nuntium_sal(v, &genus, data, &mag) < 0 ||
+        genus != SAL_CLAVIS_SERVITORIS
+    )
         return -1;
     /* parsamus parametra EC */
-    if (mag < 4) return -1;
-    if (data[0] != 0x03) return -1;            /* named_curve */
-    if (leg16(data + 1) != 0x0017) return -1;  /* secp256r1 */
+    if (mag < 4)
+        return -1;
+    if (data[0] != 0x03)
+        return -1;            /* named_curve */
+    if (leg16(data + 1) != 0x0017)
+        return -1;  /* secp256r1 */
     size_t pub_mag = data[3];
-    if (pub_mag != 65 || mag < 4 + 65) return -1;
-    if (data[4] != 0x04) return -1;            /* uncompressed */
+    if (pub_mag != 65 || mag < 4 + 65)
+        return -1;
+    if (data[4] != 0x04)
+        return -1;            /* uncompressed */
     nm_ex_octis(&v->ec_publica_servitoris.x, data + 5, 32);
     nm_ex_octis(&v->ec_publica_servitoris.y, data + 37, 32);
     v->ec_publica_servitoris.infinitum = 0;
@@ -487,12 +552,14 @@ int velum_saluta(velum_t *v)
     /* verifica signaturam (optionalis pro celeritate — verificamus) */
     size_t params_mag = 4 + pub_mag;
     size_t sig_offset = params_mag;
-    if (sig_offset + 4 > mag) return -1;
+    if (sig_offset + 4 > mag)
+        return -1;
     /* algorithmus signaturae (2 octorum) */
     sig_offset += 2;
     size_t sig_mag = leg16(data + sig_offset);
     sig_offset += 2;
-    if (sig_offset + sig_mag > mag) return -1;
+    if (sig_offset + sig_mag > mag)
+        return -1;
 
     /* digestum: SHA256(clientis_alea || servitoris_alea || params) */
     {
@@ -509,8 +576,10 @@ int velum_saluta(velum_t *v)
     }
 
     /* 5. accipe ServerHelloDone */
-    if (lege_nuntium_sal(v, &genus, data, &mag) < 0 ||
-        genus != SAL_SALVE_FACTUM)
+    if (
+        lege_nuntium_sal(v, &genus, data, &mag) < 0 ||
+        genus != SAL_SALVE_FACTUM
+    )
         return -1;
 
     /* 6. genera clavis ECDHE clientis */
@@ -577,8 +646,10 @@ int velum_saluta(velum_t *v)
         summa256_fini(&copia, digestum);
 
         uint8_t verify_data[12];
-        prf(v->secretum_dom, 48, "client finished", digestum, 32,
-            verify_data, 12);
+        prf(
+            v->secretum_dom, 48, "client finished", digestum, 32,
+            verify_data, 12
+        );
 
         uint8_t finitum[16];
         finitum[0] = SAL_FINITUM;
@@ -598,8 +669,10 @@ int velum_saluta(velum_t *v)
         uint8_t gen_tab;
         uint8_t alveus[16];
         size_t alveus_mag;
-        if (lege_tabellam(v, &gen_tab, alveus, &alveus_mag) < 0) return -1;
-        if (gen_tab != TABELLA_MUTATIO) return -1;
+        if (lege_tabellam(v, &gen_tab, alveus, &alveus_mag) < 0)
+            return -1;
+        if (gen_tab != TABELLA_MUTATIO)
+            return -1;
         v->revelans = 1;
     }
 
@@ -610,17 +683,22 @@ int velum_saluta(velum_t *v)
         size_t alveus_mag;
         if (lege_tabellam_revelam(v, &gen_tab, alveus, &alveus_mag) < 0)
             return -1;
-        if (gen_tab != TABELLA_SALUTATIO) return -1;
-        if (alveus_mag < 16) return -1;
-        if (alveus[0] != SAL_FINITUM) return -1;
+        if (gen_tab != TABELLA_SALUTATIO)
+            return -1;
+        if (alveus_mag < 16)
+            return -1;
+        if (alveus[0] != SAL_FINITUM)
+            return -1;
         /* verificamus verify_data servitoris */
         summa256_ctx_t copia = v->transcriptum;
         uint8_t digestum[32];
         summa256_fini(&copia, digestum);
 
         uint8_t verify_expectatum[12];
-        prf(v->secretum_dom, 48, "server finished", digestum, 32,
-            verify_expectatum, 12);
+        prf(
+            v->secretum_dom, 48, "server finished", digestum, 32,
+            verify_expectatum, 12
+        );
 
         if (memcmp(alveus + 4, verify_expectatum, 12) != 0)
             return -1;
@@ -655,7 +733,8 @@ int velum_lege(velum_t *v, void *alveus, size_t mag)
         if (v->app_pos < v->app_mag) {
             size_t disponibilia = v->app_mag - v->app_pos;
             size_t n = mag - lectum;
-            if (n > disponibilia) n = disponibilia;
+            if (n > disponibilia)
+                n = disponibilia;
             memcpy(dest + lectum, v->alveus_app + v->app_pos, n);
             v->app_pos += n;
             lectum += n;
@@ -681,7 +760,8 @@ int velum_lege(velum_t *v, void *alveus, size_t mag)
 
 void velum_claude(velum_t *v)
 {
-    if (!v) return;
+    if (!v)
+        return;
     /* mitte close_notify (optionalis) */
     if (v->occultans) {
         uint8_t alerta[2] = { 1, 0 };  /* warning, close_notify */

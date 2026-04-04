@@ -34,4 +34,7 @@ proba.o: proba.c proba.h crispus.h internum.h arcana.h
 purga:
 	rm -f $(OBIECTA) proba.o crispe.o $(BIBLIOTHECA) proba crispe
 
+linte:
+	insinulint -c *.c *.h
+
 .PHONY: omnia purga proba

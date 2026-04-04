@@ -28,9 +28,11 @@ void summa256_fini(summa256_ctx_t *ctx, uint8_t digestum[32]);
 void summa256(const uint8_t *data, size_t longitudo, uint8_t digestum[32]);
 
 /* HMAC-SHA-256 */
-void sigillum256(const uint8_t *clavis, size_t clavis_mag,
-                 const uint8_t *nuntius, size_t nuntius_mag,
-                 uint8_t mac[32]);
+void sigillum256(
+    const uint8_t *clavis, size_t clavis_mag,
+    const uint8_t *nuntius, size_t nuntius_mag,
+    uint8_t mac[32]
+);
 
 /* --- AES-128 --- */
 
@@ -39,19 +41,25 @@ typedef struct {
 } arca128_ctx_t;
 
 void arca128_expande(arca128_ctx_t *ctx, const uint8_t clavis[16]);
-void arca128_occulta_truncum(const arca128_ctx_t *ctx,
-                              const uint8_t in[16], uint8_t out[16]);
+void arca128_occulta_truncum(
+    const arca128_ctx_t *ctx,
+    const uint8_t in[16], uint8_t out[16]
+);
 
 /* AES-128-GCM */
-int arca128_gcm_occulta(const uint8_t clavis[16], const uint8_t iv[12],
-                         const uint8_t *clarus, size_t clarus_mag,
-                         const uint8_t *aad, size_t aad_mag,
-                         uint8_t *occultus, uint8_t sigillum[16]);
+int arca128_gcm_occulta(
+    const uint8_t clavis[16], const uint8_t iv[12],
+    const uint8_t *clarus, size_t clarus_mag,
+    const uint8_t *aad, size_t aad_mag,
+    uint8_t *occultus, uint8_t sigillum[16]
+);
 
-int arca128_gcm_revela(const uint8_t clavis[16], const uint8_t iv[12],
-                        const uint8_t *occultus, size_t occultus_mag,
-                        const uint8_t *aad, size_t aad_mag,
-                        uint8_t *clarus, const uint8_t sigillum[16]);
+int arca128_gcm_revela(
+    const uint8_t clavis[16], const uint8_t iv[12],
+    const uint8_t *occultus, size_t occultus_mag,
+    const uint8_t *aad, size_t aad_mag,
+    uint8_t *clarus, const uint8_t sigillum[16]
+);
 
 /* --- numerus magnus --- */
 
@@ -72,8 +80,10 @@ void nm_multiplica(nm_t *r, const nm_t *a, const nm_t *b);
 void nm_divide(nm_t *q, nm_t *rem, const nm_t *a, const nm_t *b);
 void nm_modulo(nm_t *r, const nm_t *a, const nm_t *m);
 void nm_modmul(nm_t *r, const nm_t *a, const nm_t *b, const nm_t *m);
-void nm_modpot(nm_t *r, const nm_t *basis, const nm_t *exponens,
-               const nm_t *modulus);
+void nm_modpot(
+    nm_t *r, const nm_t *basis, const nm_t *exponens,
+    const nm_t *modulus
+);
 
 /* --- curva elliptica P-256 --- */
 
@@ -99,13 +109,17 @@ typedef struct {
     size_t   exponens_mag;
 } rsa_clavis_t;
 
-int rsa_verifica(const rsa_clavis_t *clavis,
-                 const uint8_t *signatura, size_t sig_mag,
-                 const uint8_t digestum[32]);
+int rsa_verifica(
+    const rsa_clavis_t *clavis,
+    const uint8_t *signatura, size_t sig_mag,
+    const uint8_t digestum[32]
+);
 
-int rsa_occulta_pkcs1(const rsa_clavis_t *clavis,
-                      const uint8_t *nuntius, size_t nun_mag,
-                      uint8_t *occultus, size_t *occ_mag);
+int rsa_occulta_pkcs1(
+    const rsa_clavis_t *clavis,
+    const uint8_t *nuntius, size_t nun_mag,
+    uint8_t *occultus, size_t *occ_mag
+);
 
 /* --- ASN.1 / X.509 --- */
 

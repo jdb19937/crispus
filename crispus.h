@@ -86,8 +86,10 @@ CRISPUSMcode crispus_multi_remove(CRISPUSM *m, CRISPUS *facilis);
 CRISPUSMcode crispus_multi_age(CRISPUSM *m, int *currentes);
 CRISPUSMsg  *crispus_multi_lege(CRISPUSM *m, int *residua);
 
-struct crispus_slist *crispus_slist_adde(struct crispus_slist *index,
-                                          const char *chorda);
+struct crispus_slist *crispus_slist_adde(
+    struct crispus_slist *index,
+    const char *chorda
+);
 void crispus_slist_libera(struct crispus_slist *index);
 
 #endif /* CRISPUS_H */

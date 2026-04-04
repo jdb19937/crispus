@@ -41,7 +41,7 @@ static const uint32_t K[64] = {
 static uint32_t lege32(const uint8_t *p)
 {
     return ((uint32_t)p[0] << 24) | ((uint32_t)p[1] << 16) |
-           ((uint32_t)p[2] << 8)  |  (uint32_t)p[3];
+    ((uint32_t)p[2] << 8)  |  (uint32_t)p[3];
 }
 
 static void scribe32(uint8_t *p, uint32_t v)
@@ -66,30 +66,42 @@ static void comprime(uint32_t status[8], const uint8_t truncus[64])
     uint32_t e = status[4], f = status[5], g = status[6], h = status[7];
 
     for (int t = 0; t < 64; t++) {
-        uint32_t T1 = h + SIGMA1(e) + CH(e,f,g) + K[t] + W[t];
-        uint32_t T2 = SIGMA0(a) + MAJ(a,b,c);
-        h = g; g = f; f = e; e = d + T1;
-        d = c; c = b; b = a; a = T1 + T2;
+        uint32_t T1 = h + SIGMA1(e) + CH(e, f, g) + K[t] + W[t];
+        uint32_t T2 = SIGMA0(a) + MAJ(a, b, c);
+        h = g;
+        g = f;
+        f = e;
+        e = d + T1;
+        d = c;
+        c = b;
+        b = a;
+        a = T1 + T2;
     }
 
-    status[0] += a; status[1] += b; status[2] += c; status[3] += d;
-    status[4] += e; status[5] += f; status[6] += g; status[7] += h;
+    status[0] += a;
+    status[1] += b;
+    status[2] += c;
+    status[3] += d;
+    status[4] += e;
+    status[5] += f;
+    status[6] += g;
+    status[7] += h;
 }
 
 /* --- interfacies publica SHA-256 --- */
 
 void summa256_initia(summa256_ctx_t *ctx)
 {
-    ctx->status[0] = 0x6a09e667;
-    ctx->status[1] = 0xbb67ae85;
-    ctx->status[2] = 0x3c6ef372;
-    ctx->status[3] = 0xa54ff53a;
-    ctx->status[4] = 0x510e527f;
-    ctx->status[5] = 0x9b05688c;
-    ctx->status[6] = 0x1f83d9ab;
-    ctx->status[7] = 0x5be0cd19;
+    ctx->status[0]       = 0x6a09e667;
+    ctx->status[1]       = 0xbb67ae85;
+    ctx->status[2]       = 0x3c6ef372;
+    ctx->status[3]       = 0xa54ff53a;
+    ctx->status[4]       = 0x510e527f;
+    ctx->status[5]       = 0x9b05688c;
+    ctx->status[6]       = 0x1f83d9ab;
+    ctx->status[7]       = 0x5be0cd19;
     ctx->numerus_bitorum = 0;
-    ctx->index_alvei = 0;
+    ctx->index_alvei     = 0;
 }
 
 void summa256_adde(summa256_ctx_t *ctx, const uint8_t *data, size_t longitudo)
@@ -140,10 +152,11 @@ void summa256(const uint8_t *data, size_t longitudo, uint8_t digestum[32])
 
 /* --- HMAC-SHA-256 (RFC 2104) --- */
 
-void sigillum256(const uint8_t *clavis, size_t clavis_mag,
-                 const uint8_t *nuntius, size_t nuntius_mag,
-                 uint8_t mac[32])
-{
+void sigillum256(
+    const uint8_t *clavis, size_t clavis_mag,
+    const uint8_t *nuntius, size_t nuntius_mag,
+    uint8_t mac[32]
+) {
     uint8_t clavis_completa[64];
     memset(clavis_completa, 0, 64);
 

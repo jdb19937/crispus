@@ -48,7 +48,8 @@ static inline int mitte_plene(int fd, const uint8_t *data, size_t mag)
     while (scriptum < mag) {
         ssize_t r = write(fd, data + scriptum, mag - scriptum);
         if (r < 0) {
-            if (errno == EINTR) continue;
+            if (errno == EINTR)
+                continue;
             return -1;
         }
         scriptum += (size_t)r;
@@ -62,7 +63,8 @@ static inline int lege_plene(int fd, uint8_t *alveus, size_t mag)
     while (lectum < mag) {
         ssize_t r = read(fd, alveus + lectum, mag - lectum);
         if (r <= 0) {
-            if (r < 0 && errno == EINTR) continue;
+            if (r < 0 && errno == EINTR)
+                continue;
             return -1;
         }
         lectum += (size_t)r;
