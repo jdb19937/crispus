@@ -40,8 +40,12 @@ static const uint32_t K[64] = {
 
 static uint32_t lege32(const uint8_t *p)
 {
-    return ((uint32_t)p[0] << 24) | ((uint32_t)p[1] << 16) |
-    ((uint32_t)p[2] << 8)  |  (uint32_t)p[3];
+    return (
+        ((uint32_t)p[0] << 24) |
+        ((uint32_t)p[1] << 16) |
+        ((uint32_t)p[2] << 8) |
+        (uint32_t)p[3]
+    );
 }
 
 static void scribe32(uint8_t *p, uint32_t v)

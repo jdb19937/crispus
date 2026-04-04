@@ -325,8 +325,12 @@ static int mitte_salve_clientis(velum_t *v)
         0x00
     };
 
-    size_t ext_totalis = sni_mag + sizeof(ext_groups) + sizeof(ext_ecf) +
-    sizeof(ext_sig) + sizeof(ext_reneg);
+    size_t ext_totalis =
+        sni_mag +
+        sizeof(ext_groups) +
+        sizeof(ext_ecf) +
+        sizeof(ext_sig) +
+        sizeof(ext_reneg);
 
     /* corpus ClientHello */
     /* 2(versio) + 32(alea) + 1(sid_mag) + 2(cs_mag) + 4(cs) +

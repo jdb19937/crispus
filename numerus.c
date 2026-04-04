@@ -187,8 +187,7 @@ void nm_multiplica(nm_t *r, const nm_t *a, const nm_t *b)
     for (int i = 0; i < a->n; i++) {
         uint64_t portatio = 0;
         for (int j = 0; j < b->n && i + j < NM_VERBA; j++) {
-            uint64_t prod = (uint64_t)a->v[i] * b->v[j] +
-            temp.v[i + j] + portatio;
+            uint64_t prod = (uint64_t)a->v[i] * b->v[j] + temp.v[i + j] + portatio;
             temp.v[i + j] = (uint32_t)prod;
             portatio      = prod >> 32;
         }
@@ -312,10 +311,9 @@ static void mont_redc(const mont_t *mt, nm_t *T)
             int idx = i + j;
             if (idx >= NM_VERBA)
                 break;
-            uint64_t prod = (uint64_t)u * mt->modulus.v[j]
-            + T->v[idx] + portatio;
-            T->v[idx] = (uint32_t)prod;
-            portatio  = prod >> 32;
+            uint64_t prod = (uint64_t)u * mt->modulus.v[j] + T->v[idx] + portatio;
+            T->v[idx]     = (uint32_t)prod;
+            portatio      = prod >> 32;
         }
         for (int j = i + k; j < NM_VERBA && portatio; j++) {
             uint64_t s = (uint64_t)T->v[j] + portatio;
@@ -413,38 +411,48 @@ void nm_modpot(
 
 /* primus campi: p = 2^256 - 2^224 + 2^192 + 2^96 - 1 */
 const nm_t EC_PRIMUS = {
-    .v = { 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0x00000000,
-        0x00000000, 0x00000000, 0x00000001, 0xFFFFFFFF },
-    .n = 8
+    {
+        0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0x00000000,
+        0x00000000, 0x00000000, 0x00000001, 0xFFFFFFFF
+    },
+    8
 };
 
 /* ordo: n */
 const nm_t EC_ORDO = {
-    .v = { 0xFC632551, 0xF3B9CAC2, 0xA7179E84, 0xBCE6FAAD,
-        0xFFFFFFFF, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF },
-    .n = 8
+    {
+        0xFC632551, 0xF3B9CAC2, 0xA7179E84, 0xBCE6FAAD,
+        0xFFFFFFFF, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF
+    },
+    8
 };
 
 /* generator G */
 const ec_punctum_t EC_GENERATOR = {
-    .x = {
-        .v = { 0xD898C296, 0xF4A13945, 0x2DEB33A0, 0x77037D81,
-            0x63A440F2, 0xF8BCE6E5, 0xE12C4247, 0x6B17D1F2 },
-        .n = 8
+    {
+        {
+            0xD898C296, 0xF4A13945, 0x2DEB33A0, 0x77037D81,
+            0x63A440F2, 0xF8BCE6E5, 0xE12C4247, 0x6B17D1F2
+        },
+        8
     },
-    .y = {
-        .v = { 0x37BF51F5, 0xCBB64068, 0x6B315ECE, 0x2BCE3357,
-            0x7C0F9E16, 0x8EE7EB4A, 0xFE1A7F9B, 0x4FE342E2 },
-        .n = 8
+    {
+        {
+            0x37BF51F5, 0xCBB64068, 0x6B315ECE, 0x2BCE3357,
+            0x7C0F9E16, 0x8EE7EB4A, 0xFE1A7F9B, 0x4FE342E2
+        },
+        8
     },
-    .infinitum = 0
+    0
 };
 
 /* a = -3 mod p */
 static const nm_t EC_A = {
-    .v = { 0xFFFFFFFC, 0xFFFFFFFF, 0xFFFFFFFF, 0x00000000,
-        0x00000000, 0x00000000, 0x00000001, 0xFFFFFFFF },
-    .n = 8
+    {
+        0xFFFFFFFC, 0xFFFFFFFF, 0xFFFFFFFF, 0x00000000,
+        0x00000000, 0x00000000, 0x00000001, 0xFFFFFFFF
+    },
+    8
 };
 
 /* --- arithmetica campi Fp --- */

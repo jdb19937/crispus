@@ -40,9 +40,9 @@ static const uint8_t RCON[10] = {
 static uint32_t verbum_sub(uint32_t w)
 {
     return ((uint32_t)TABULA_S[(w >> 24) & 0xff] << 24) |
-    ((uint32_t)TABULA_S[(w >> 16) & 0xff] << 16) |
-    ((uint32_t)TABULA_S[(w >>  8) & 0xff] <<  8) |
-    ((uint32_t)TABULA_S[ w        & 0xff]);
+        ((uint32_t)TABULA_S[(w >> 16) & 0xff] << 16) |
+        ((uint32_t)TABULA_S[(w >>  8) & 0xff] <<  8) |
+        ((uint32_t)TABULA_S[ w        & 0xff]);
 }
 
 static uint32_t verbum_rota(uint32_t w)
@@ -54,9 +54,9 @@ void arca128_expande(arca128_ctx_t *ctx, const uint8_t clavis[16])
 {
     for (int i = 0; i < 4; i++)
         ctx->claves_expansae[i] = ((uint32_t)clavis[4*i] << 24) |
-    ((uint32_t)clavis[4*i+1] << 16) |
-    ((uint32_t)clavis[4*i+2] << 8) |
-    (uint32_t)clavis[4*i+3];
+            ((uint32_t)clavis[4*i+1] << 16) |
+            ((uint32_t)clavis[4*i+2] << 8) |
+            (uint32_t)clavis[4*i+3];
 
     for (int i = 4; i < 44; i++) {
         uint32_t temp = ctx->claves_expansae[i - 1];
