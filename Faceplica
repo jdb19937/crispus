@@ -31,10 +31,18 @@ proba: $(BIBLIOTHECA) proba.o
 proba.o: proba.c proba.h crispus.h internum.h arcana.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
+PREFIX = /opt/apotheca
+
+colloca: omnia
+	install -d $(PREFIX)/bin $(PREFIX)/lib $(PREFIX)/include/crispus
+	install -m 755 crispe $(PREFIX)/bin/
+	install -m 644 $(BIBLIOTHECA) $(PREFIX)/lib/
+	install -m 644 crispus.h arcana.h $(PREFIX)/include/crispus/
+
 purga:
 	rm -f $(OBIECTA) proba.o crispe.o $(BIBLIOTHECA) proba crispe
 
 linte:
 	insinulint -c *.c *.h
 
-.PHONY: omnia purga proba
+.PHONY: omnia colloca purga proba
