@@ -1,11 +1,10 @@
 /*
- * crispus/proba.c — probationes bibliothecae crispus
+ * crispus/proba_prima.c — probationes bibliothecae crispus
  *
  * Probat cryptographiam (SHA-256, AES-GCM, bignum, EC P-256)
  * et coniunctionem HTTPS ad servitores notos.
  */
 
-#include "proba.h"
 #include "crispus.h"
 #include "internum.h"
 
@@ -463,4 +462,9 @@ int crispus_proba(void)
         probationes_successae, probationes_defectae
     );
     return probationes_defectae;
+}
+
+int main(void)
+{
+    return crispus_proba() == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
 }

@@ -7,6 +7,7 @@ AR      ?= ar
 ARFLAGS = rcs
 
 FONTES  = crispus.c velum.c summa.c arcana.c numerus.c
+CAPITA  = arcana.h crispus.h internum.h utilia.h
 OBIECTA = $(FONTES:.c=.o)
 
 BIBLIOTHECA = libcrispus.a
@@ -22,14 +23,11 @@ $(BIBLIOTHECA): $(OBIECTA)
 crispe: $(BIBLIOTHECA) crispe.o
 	$(CC) $(CFLAGS) -o $@ crispe.o -L. -lcrispus
 
-crispe.o: crispe.c crispus.h
-	$(CC) $(CFLAGS) -c -o $@ $<
+proba_prima: $(BIBLIOTHECA) proba_prima.o
+	$(CC) $(CFLAGS) -o $@ proba_prima.o -L. -lcrispus
 
-proba: $(BIBLIOTHECA) proba.o
-	$(CC) $(CFLAGS) -o $@ proba.o -L. -lcrispus
-
-proba.o: proba.c proba.h crispus.h internum.h arcana.h
-	$(CC) $(CFLAGS) -c -o $@ $<
+proba: proba_prima
+	./proba_prima
 
 PREFIX = /opt/apotheca
 
@@ -40,7 +38,7 @@ colloca: omnia
 	install -m 644 crispus.h arcana.h $(PREFIX)/include/crispus/
 
 purga:
-	rm -f $(OBIECTA) proba.o crispe.o $(BIBLIOTHECA) proba crispe
+	rm -f $(OBIECTA) proba_prima.o crispe.o $(BIBLIOTHECA) proba_prima crispe
 
 linte:
 	insinulint -c *.c *.h
