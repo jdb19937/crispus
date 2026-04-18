@@ -1,35 +1,28 @@
 # Faceplica — libcrispus.a
 # Bibliotheca retis HTTPS sine dependentiis externis.
 
-CC      ?= cc
-CFLAGS  ?= -Wall -Wextra -pedantic -std=c99 -O2
-AR      ?= ar
-ARFLAGS = rcs
-
-FONTES  = crispus.c velum.c summa.c arcana.c numerus.c
-CAPITA  = arcana.h crispus.h internum.h utilia.h
-OBIECTA = $(FONTES:.c=.o)
-
+PREFIX      = /opt/apotheca
+FONTES      = crispus.c velum.c summa.c arcana.c numerus.c
+CAPITA      = arcana.h crispus.h internum.h utilia.h
+OBIECTA     = $(FONTES:.c=.o)
 BIBLIOTHECA = libcrispus.a
 
 omnia: $(BIBLIOTHECA) crispe
 
 $(BIBLIOTHECA): $(OBIECTA)
-	$(AR) $(ARFLAGS) $@ $^
+	ar rcs $@ $^
 
-%.o: %.c
-	$(CC) $(CFLAGS) -c -o $@ $<
+%.o: %.c $(CAPITA)
+	ccc $<
 
-crispe: $(BIBLIOTHECA) crispe.o
-	$(CC) $(CFLAGS) -o $@ crispe.o -L. -lcrispus
+crispe: crispe.o $(BIBLIOTHECA)
+	ldi $^
 
-proba_prima: $(BIBLIOTHECA) proba_prima.o
-	$(CC) $(CFLAGS) -o $@ proba_prima.o -L. -lcrispus
+proba_prima: proba_prima.o $(BIBLIOTHECA)
+	ldi $^
 
 proba: proba_prima
 	./proba_prima
-
-PREFIX = /opt/apotheca
 
 colloca: omnia
 	install -d $(PREFIX)/bin $(PREFIX)/lib $(PREFIX)/include/crispus
@@ -41,6 +34,6 @@ purga:
 	rm -f $(OBIECTA) proba_prima.o crispe.o $(BIBLIOTHECA) proba_prima crispe
 
 linte:
-	insinulint -c *.c *.h
+	insinulint -c $(FONTES) $(CAPITA)
 
 .PHONY: omnia colloca purga proba

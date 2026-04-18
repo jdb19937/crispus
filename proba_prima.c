@@ -305,7 +305,7 @@ static void proba_https(void)
         struct {
             char *data;
             size_t mag;
-        }resp = {
+        } resp = {
             NULL, 0
         };
 
@@ -337,7 +337,7 @@ static void proba_https(void)
         struct {
             char *data;
             size_t mag;
-        }resp = {
+        } resp = {
             NULL, 0
         };
 
@@ -371,7 +371,7 @@ static void proba_https(void)
         struct {
             char *data;
             size_t mag;
-        }resp = {
+        } resp = {
             NULL, 0
         };
 
@@ -405,7 +405,7 @@ static void proba_https(void)
         struct {
             char *data;
             size_t mag;
-        }resp = {
+        } resp = {
             NULL, 0
         };
 
