@@ -194,8 +194,7 @@ static CRISPUScode age_rogatum(struct crispus_facilis *f)
 
     int redirectiones = 0;
 
-redirectio:;
-
+redirectio:
     struct url_partes url;
     if (resolve_url(url_nunc, &url) < 0) {
         free(url_nunc);
@@ -652,7 +651,7 @@ static size_t filius_scribe_fn(void *data, size_t mag, size_t nmemb, void *usor)
     struct {
         uint8_t *data;
         size_t mag;
-    }*acc = usor;
+    } *acc = usor;
     uint8_t *novum = realloc(acc->data, acc->mag + realis);
     if (!novum)
         return 0;
@@ -697,7 +696,7 @@ CRISPUSMcode crispus_multi_adde(CRISPUSM *multi, CRISPUS *facilis)
         struct {
             uint8_t *data;
             size_t mag;
-        }acc = {
+        } acc = {
             NULL, 0
         };
 
