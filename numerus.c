@@ -446,7 +446,7 @@ const ec_punctum_t EC_GENERATOR = {
     0
 };
 
-/* a = -3 mod p */
+/* a = -3 mod p (P-256) */
 static const nm_t EC_A = {
     {
         0xFFFFFFFC, 0xFFFFFFFF, 0xFFFFFFFF, 0x00000000,
@@ -455,45 +455,103 @@ static const nm_t EC_A = {
     8
 };
 
-/* --- arithmetica campi Fp --- */
+/* --- curva P-256 --- */
 
-static void fp_adde(nm_t *r, const nm_t *a, const nm_t *b)
+const curva_t CURVA_P256 = {
+    /* p */ {
+        { 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0x00000000,
+            0x00000000, 0x00000000, 0x00000001, 0xFFFFFFFF },
+        8
+    },
+    /* a = -3 mod p */ {
+        { 0xFFFFFFFC, 0xFFFFFFFF, 0xFFFFFFFF, 0x00000000,
+            0x00000000, 0x00000000, 0x00000001, 0xFFFFFFFF },
+        8
+    },
+    /* n */ {
+        { 0xFC632551, 0xF3B9CAC2, 0xA7179E84, 0xBCE6FAAD,
+            0xFFFFFFFF, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF },
+        8
+    },
+    /* G */ {
+        { { 0xD898C296, 0xF4A13945, 0x2DEB33A0, 0x77037D81,
+                0x63A440F2, 0xF8BCE6E5, 0xE12C4247, 0x6B17D1F2 }, 8 },
+        { { 0x37BF51F5, 0xCBB64068, 0x6B315ECE, 0x2BCE3357,
+                0x7C0F9E16, 0x8EE7EB4A, 0xFE1A7F9B, 0x4FE342E2 }, 8 },
+        0
+    }
+};
+
+/* --- curva secp256k1 ---
+ *   p = 2^256 - 2^32 - 977 = FFFFFFFF...FFFFFFFE FFFFFC2F
+ *   a = 0, b = 7 (b non necessarius pro operationibus ec_adde)
+ *   n = FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFE BAAEDCE6 AF48A03B BFD25E8C D0364141
+ *   Gx = 79BE667E F9DCBBAC 55A06295 CE870B07 029BFCDB 2DCE28D9 59F2815B 16F81798
+ *   Gy = 483ADA77 26A3C465 5DA4FBFC 0E1108A8 FD17B448 A6855419 9C47D08F FB10D4B8
+ */
+const curva_t CURVA_SECP256K1 = {
+    /* p */ {
+        { 0xFFFFFC2F, 0xFFFFFFFE, 0xFFFFFFFF, 0xFFFFFFFF,
+            0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF },
+        8
+    },
+    /* a = 0 */ {
+        { 0, 0, 0, 0, 0, 0, 0, 0 },
+        1
+    },
+    /* n */ {
+        { 0xD0364141, 0xBFD25E8C, 0xAF48A03B, 0xBAAEDCE6,
+            0xFFFFFFFE, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF },
+        8
+    },
+    /* G */ {
+        { { 0x16F81798, 0x59F2815B, 0x2DCE28D9, 0x029BFCDB,
+                0xCE870B07, 0x55A06295, 0xF9DCBBAC, 0x79BE667E }, 8 },
+        { { 0xFB10D4B8, 0x9C47D08F, 0xA6855419, 0xFD17B448,
+                0x0E1108A8, 0x5DA4FBFC, 0x26A3C465, 0x483ADA77 }, 8 },
+        0
+    }
+};
+
+/* --- arithmetica campi Fp, parametrizata primo --- */
+
+static void fp_adde_p(nm_t *r, const nm_t *a, const nm_t *b, const nm_t *primus)
 {
     nm_adde(r, a, b);
-    if (nm_compara(r, &EC_PRIMUS) >= 0)
-        nm_subtrahe(r, r, &EC_PRIMUS);
+    if (nm_compara(r, primus) >= 0)
+        nm_subtrahe(r, r, primus);
 }
 
-static void fp_subtrahe(nm_t *r, const nm_t *a, const nm_t *b)
+static void fp_subtrahe_p(nm_t *r, const nm_t *a, const nm_t *b, const nm_t *primus)
 {
     if (nm_compara(a, b) >= 0) {
         nm_subtrahe(r, a, b);
     } else {
         nm_t temp;
-        nm_adde(&temp, a, &EC_PRIMUS);
+        nm_adde(&temp, a, primus);
         nm_subtrahe(r, &temp, b);
     }
 }
 
-static void fp_multiplica(nm_t *r, const nm_t *a, const nm_t *b)
+static void fp_multiplica_p(nm_t *r, const nm_t *a, const nm_t *b, const nm_t *primus)
 {
-    nm_modmul(r, a, b, &EC_PRIMUS);
+    nm_modmul(r, a, b, primus);
 }
 
 /* inversio per theorema Fermati: a^(-1) = a^(p-2) mod p */
-static void fp_inversa(nm_t *r, const nm_t *a)
+static void fp_inversa_p(nm_t *r, const nm_t *a, const nm_t *primus)
 {
     nm_t exp;
     nm_t duo;
     nm_ex_nihilo(&duo);
     duo.v[0] = 2;
-    nm_subtrahe(&exp, &EC_PRIMUS, &duo);
-    nm_modpot(r, a, &exp, &EC_PRIMUS);
+    nm_subtrahe(&exp, primus, &duo);
+    nm_modpot(r, a, &exp, primus);
 }
 
-/* --- operationes puncti --- */
+/* --- operationes puncti, parametrizatae curva --- */
 
-void ec_adde(ec_punctum_t *r, const ec_punctum_t *P, const ec_punctum_t *Q)
+void ec_adde_curva(ec_punctum_t *r, const ec_punctum_t *P, const ec_punctum_t *Q, const curva_t *curva)
 {
     if (P->infinitum) {
         *r = *Q;
@@ -504,9 +562,11 @@ void ec_adde(ec_punctum_t *r, const ec_punctum_t *P, const ec_punctum_t *Q)
         return;
     }
 
+    const nm_t *pmod = &curva->p;
+
     /* si P == -Q, reddit infinitum */
     nm_t summa_y;
-    fp_adde(&summa_y, &P->y, &Q->y);
+    fp_adde_p(&summa_y, &P->y, &Q->y, pmod);
     if (nm_compara(&P->x, &Q->x) == 0 && nm_est_nihil(&summa_y)) {
         nm_ex_nihilo(&r->x);
         nm_ex_nihilo(&r->y);
@@ -522,40 +582,40 @@ void ec_adde(ec_punctum_t *r, const ec_punctum_t *P, const ec_punctum_t *Q)
     ) {
         /* duplicatio: lambda = (3*x^2 + a) / (2*y) */
         nm_t x2;
-        fp_multiplica(&x2, &P->x, &P->x);         /* x^2 */
-        fp_adde(&temp, &x2, &x2);
-        fp_adde(&temp, &temp, &x2);                 /* 3*x^2 */
-        fp_adde(&temp, &temp, &EC_A);               /* 3*x^2 + a */
+        fp_multiplica_p(&x2, &P->x, &P->x, pmod);      /* x^2 */
+        fp_adde_p(&temp, &x2, &x2, pmod);
+        fp_adde_p(&temp, &temp, &x2, pmod);            /* 3*x^2 */
+        fp_adde_p(&temp, &temp, &curva->a, pmod);      /* + a */
 
         nm_t y2;
-        fp_adde(&y2, &P->y, &P->y);                 /* 2*y */
-        fp_inversa(&temp2, &y2);
-        fp_multiplica(&lambda, &temp, &temp2);
+        fp_adde_p(&y2, &P->y, &P->y, pmod);            /* 2*y */
+        fp_inversa_p(&temp2, &y2, pmod);
+        fp_multiplica_p(&lambda, &temp, &temp2, pmod);
     } else {
         /* additio: lambda = (y2 - y1) / (x2 - x1) */
-        fp_subtrahe(&temp, &Q->y, &P->y);
-        fp_subtrahe(&temp2, &Q->x, &P->x);
+        fp_subtrahe_p(&temp, &Q->y, &P->y, pmod);
+        fp_subtrahe_p(&temp2, &Q->x, &P->x, pmod);
         nm_t inv;
-        fp_inversa(&inv, &temp2);
-        fp_multiplica(&lambda, &temp, &inv);
+        fp_inversa_p(&inv, &temp2, pmod);
+        fp_multiplica_p(&lambda, &temp, &inv, pmod);
     }
 
     /* x3 = lambda^2 - x1 - x2 */
     nm_t l2;
-    fp_multiplica(&l2, &lambda, &lambda);
-    fp_subtrahe(&temp, &l2, &P->x);
-    fp_subtrahe(&r->x, &temp, &Q->x);
+    fp_multiplica_p(&l2, &lambda, &lambda, pmod);
+    fp_subtrahe_p(&temp, &l2, &P->x, pmod);
+    fp_subtrahe_p(&r->x, &temp, &Q->x, pmod);
 
     /* y3 = lambda * (x1 - x3) - y1 */
-    fp_subtrahe(&temp, &P->x, &r->x);
-    fp_multiplica(&temp2, &lambda, &temp);
-    fp_subtrahe(&r->y, &temp2, &P->y);
+    fp_subtrahe_p(&temp, &P->x, &r->x, pmod);
+    fp_multiplica_p(&temp2, &lambda, &temp, pmod);
+    fp_subtrahe_p(&r->y, &temp2, &P->y, pmod);
 
     r->infinitum = 0;
 }
 
 /* multiplicatio scalaris: R = k * P (methodus duplica-et-adde) */
-void ec_multiplica(ec_punctum_t *r, const nm_t *k, const ec_punctum_t *P)
+void ec_multiplica_curva(ec_punctum_t *r, const nm_t *k, const ec_punctum_t *P, const curva_t *curva)
 {
     ec_punctum_t acc;
     nm_ex_nihilo(&acc.x);
@@ -565,14 +625,26 @@ void ec_multiplica(ec_punctum_t *r, const nm_t *k, const ec_punctum_t *P)
     int nbits = nm_summa_bitorum(k);
     for (int i = nbits - 1; i >= 0; i--) {
         ec_punctum_t duplex;
-        ec_adde(&duplex, &acc, &acc);
+        ec_adde_curva(&duplex, &acc, &acc, curva);
         if (nm_bitus(k, i)) {
-            ec_adde(&acc, &duplex, P);
+            ec_adde_curva(&acc, &duplex, P, curva);
         } else {
             acc = duplex;
         }
     }
     *r = acc;
+}
+
+/* --- signaturae P-256 retentae ad usum internum (TLS) --- */
+
+void ec_adde(ec_punctum_t *r, const ec_punctum_t *P, const ec_punctum_t *Q)
+{
+    ec_adde_curva(r, P, Q, &CURVA_P256);
+}
+
+void ec_multiplica(ec_punctum_t *r, const nm_t *k, const ec_punctum_t *P)
+{
+    ec_multiplica_curva(r, k, P, &CURVA_P256);
 }
 
 /* --- RSA --- */

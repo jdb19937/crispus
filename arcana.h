@@ -27,6 +27,19 @@ void summa256_adde(summa256_ctx_t *ctx, const uint8_t *data, size_t longitudo);
 void summa256_fini(summa256_ctx_t *ctx, uint8_t digestum[32]);
 void summa256(const uint8_t *data, size_t longitudo, uint8_t digestum[32]);
 
+/* --- SHA3-256 (FIPS 202, Keccak-f[1600]) --- */
+
+typedef struct {
+    uint64_t status[25];        /* 5x5 matrix lanarum 64-bitorum */
+    uint8_t  alveus[136];       /* rata = 1088 bita = 136 octeti */
+    size_t   index_alvei;       /* octetus sequens in alveo */
+} summa3_256_ctx_t;
+
+void summa3_256_initia(summa3_256_ctx_t *ctx);
+void summa3_256_adde(summa3_256_ctx_t *ctx, const uint8_t *data, size_t longitudo);
+void summa3_256_fini(summa3_256_ctx_t *ctx, uint8_t digestum[32]);
+void summa3_256(const uint8_t *data, size_t longitudo, uint8_t digestum[32]);
+
 /* HMAC-SHA-256 */
 void sigillum256(
     const uint8_t *clavis, size_t clavis_mag,
@@ -85,7 +98,7 @@ void nm_modpot(
     const nm_t *modulus
 );
 
-/* --- curva elliptica P-256 --- */
+/* --- curva elliptica --- */
 
 typedef struct {
     nm_t x;
@@ -93,12 +106,51 @@ typedef struct {
     int  infinitum;     /* punctum in infinito (elementum neutrum) */
 } ec_punctum_t;
 
+/* curva elliptica y^2 = x^3 + a*x + b mod p, ordo n, generator G */
+typedef struct {
+    nm_t         p;     /* primus campi */
+    nm_t         a;     /* coefficiens a */
+    nm_t         n;     /* ordo (ordo generatoris G) */
+    ec_punctum_t G;     /* generator */
+} curva_t;
+
+extern const curva_t CURVA_P256;
+extern const curva_t CURVA_SECP256K1;
+
+/* Additio puncti / multiplicatio scalaris, parametrizatae curva. */
+void ec_adde_curva(ec_punctum_t *r, const ec_punctum_t *P, const ec_punctum_t *Q, const curva_t *curva);
+void ec_multiplica_curva(ec_punctum_t *r, const nm_t *k, const ec_punctum_t *P, const curva_t *curva);
+
+/* Signaturae vetustiores — P-256 (pro TLS internus). */
 void ec_multiplica(ec_punctum_t *r, const nm_t *k, const ec_punctum_t *p);
 void ec_adde(ec_punctum_t *r, const ec_punctum_t *a, const ec_punctum_t *b);
 
 extern const ec_punctum_t EC_GENERATOR;
 extern const nm_t EC_PRIMUS;
 extern const nm_t EC_ORDO;
+
+/* --- ECDSA secp256k1 --- */
+
+/* Computa clavem publicam (punctum) ex clavi privata (scalar 1..n-1). */
+void k256_publica(ec_punctum_t *publica, const nm_t *privata);
+
+/* Verifica signaturam ECDSA secp256k1.
+ * - publica: clavis publica
+ * - digestum: 32 octeti (typice SHA-256 vel SHA3-256 nuntii)
+ * - signatura: 64 octeti, (r || s) big-endian, 32+32
+ * Redit 1 si valida, 0 si invalida. */
+int k256_ecdsa_verifica(
+    const ec_punctum_t *publica,
+    const uint8_t digestum[32],
+    const uint8_t signatura[64]
+);
+
+/* Signa digestum cum clavi privata. Adhibetur alea interna pro k. */
+void k256_ecdsa_signa(
+    uint8_t signatura[64],
+    const nm_t *privata,
+    const uint8_t digestum[32]
+);
 
 /* --- RSA --- */
 
