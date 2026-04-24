@@ -2,7 +2,7 @@
 # Bibliotheca retis HTTPS sine dependentiis externis.
 
 PREFIX      = /opt/apotheca
-FONTES      = crispus.c velum.c summa.c summa3.c arcana.c numerus.c k256.c
+FONTES      = crispus.c velum.c summa.c summa3.c arcana.c numerus.c k256.c chartae.c
 CAPITA      = arcana.h crispus.h internum.h utilia.h
 OBIECTA     = $(FONTES:.c=.o)
 BIBLIOTHECA = libcrispus.a
@@ -27,20 +27,26 @@ proba_summa3: proba_summa3.o $(BIBLIOTHECA)
 proba_k256: proba_k256.o $(BIBLIOTHECA)
 	ldi $^
 
-proba: proba_prima proba_summa3 proba_k256
+proba_chartae: proba_chartae.o $(BIBLIOTHECA)
+	ldi $^
+
+proba: proba_prima proba_summa3 proba_k256 proba_chartae
 	./proba_prima
 	./proba_summa3
 	./proba_k256
+	./proba_chartae
 
 colloca: omnia
 	install -d $(PREFIX)/bin $(PREFIX)/lib $(PREFIX)/include/crispus
 	install -m 755 crispe $(PREFIX)/bin/
 	install -m 644 $(BIBLIOTHECA) $(PREFIX)/lib/
-	install -m 644 crispus.h arcana.h $(PREFIX)/include/crispus/
+	install -m 644 crispus.h arcana.h chartae.h $(PREFIX)/include/crispus/
 
 purga:
-	rm -f $(OBIECTA) proba_prima.o proba_summa3.o proba_k256.o crispe.o \
-	      $(BIBLIOTHECA) proba_prima proba_summa3 proba_k256 crispe
+	rm -f $(OBIECTA) proba_prima.o proba_summa3.o proba_k256.o \
+	      proba_chartae.o crispe.o \
+	      $(BIBLIOTHECA) proba_prima proba_summa3 proba_k256 \
+	      proba_chartae crispe
 
 linte:
 	insinulint -c $(FONTES) $(CAPITA)
